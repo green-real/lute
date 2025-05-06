@@ -84,6 +84,9 @@ include(extern/uWebSockets.cmake)
 # Define include directories for uWebSockets and uSockets
 set(UWEBSOCKETS_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/uWebSockets/src)
 
+# libffi setup
+include(extern/libffi.cmake)
+
 # Lute Targets
 
 add_executable(Lute.CLI)
@@ -118,7 +121,7 @@ target_include_directories(Lute.Time PUBLIC time/include ${LIBUV_INCLUDE_DIR})
 
 target_link_libraries(Lute.Runtime PUBLIC Luau.Require PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.VM Lute.Std uv_a)
 target_link_libraries(Lute.Crypto PRIVATE Lute.Runtime Luau.VM uv_a ssl crypto)
-target_link_libraries(Lute.FFI PRIVATE Lute.Runtime Luau.VM uv_a)
+target_link_libraries(Lute.FFI PRIVATE Lute.Runtime Luau.VM uv_a libffi)
 target_link_libraries(Lute.Fs PRIVATE Lute.Runtime Luau.VM uv_a)
 target_link_libraries(Lute.Luau PRIVATE Lute.Runtime Luau.VM uv_a Luau.Analysis Luau.Ast Luau.Compiler)
 target_link_libraries(Lute.Net PRIVATE Lute.Runtime Luau.VM uv_a libcurl uWS)

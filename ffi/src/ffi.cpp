@@ -2,8 +2,47 @@
 
 #include "lute/runtime.h"
 
+#include "Luau/DenseHash.h"
+
+#include "lua.h"
+#include "lualib.h"
+
+#include <ffi.h>
+
+int add(int a, int b) {
+    return a + b;
+}
+
 namespace ffi
 {
+
+int lua_test(lua_State* L)
+{
+    int x = luaL_checkinteger(L, 1);
+    int y = luaL_checkinteger(L, 2);
+
+    ffi_cif cif;
+    ffi_type *args[2];
+    void *values[2];
+    int result;
+
+    args[0] = &ffi_type_sint;
+    args[1] = &ffi_type_sint;
+    values[0] = &x;
+    values[1] = &y;
+
+    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 2, &ffi_type_sint, args) != FFI_OK) {
+        luaL_errorL(L, "ffi_prep_cif failed");
+        return 1;
+    }
+
+    ffi_call(&cif, FFI_FN(add), &result, values);
+
+    lua_pushinteger(L, result);
+
+    return 1;
+}
+
 
 } // namespace ffi
 

@@ -12,16 +12,18 @@ int luteopen_ffi(lua_State* L);
 namespace ffi
 {
 
-static const char kTypesProperty[] = "types";
+int lua_test(lua_State* L);
+
+static const char kCInterfaceProperty[] = "c";
 
 static const luaL_Reg lib[] = {
-    
+    {"test", lua_test},
     
     {nullptr, nullptr},
 };
 
 static const std::string properties[] = {
-    kTypesProperty
+    kCInterfaceProperty
 };
 
 } // namespace ffi
