@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libffi C)
+project(libffi C ASM)
 
 set(LIBFFI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/libffi)
 
@@ -98,12 +98,10 @@ else()
     enable_language(ASM)
 endif()
 
-message("TARGET_PLATFORM IS ${TARGET_PLATFORM}")
-
 set(FFI_EXEC_TRAMPOLINE_TABLE 0)
 if(TARGET_PLATFORM STREQUAL X86_WIN64)
     if(MSVC)
-        list(APPEND WIN_ASSEMBLY_LIST ${LIBFFI_SOURCE_DIR}/src/x86/win64_intel.S)
+        list(APPEND WIN_ASSEMBLY_LIST src/x86/win64_intel.S)
         enable_language(ASM_MASM)
     else()
         list(APPEND SOURCES_LIST ${LIBFFI_SOURCE_DIR}/src/x86/win64.S)
@@ -112,9 +110,6 @@ if(TARGET_PLATFORM STREQUAL X86_WIN64)
 
     set(TARGETDIR x86)
 elseif(TARGET_PLATFORM STREQUAL X86_64)
-message("TARGET_PLATFORM IS X86_64")
-
-
     list(APPEND SOURCES_LIST
         ${LIBFFI_SOURCE_DIR}/src/x86/ffi64.c
         ${LIBFFI_SOURCE_DIR}/src/x86/unix64.S)
@@ -143,9 +138,9 @@ message("TARGET_PLATFORM IS X86_64")
     set(TARGETDIR x86)
 elseif(TARGET_PLATFORM MATCHES X86.*)
     if(MSVC)
-        list(APPEND WIN_ASSEMBLY_LIST ${LIBFFI_SOURCE_DIR}/src/x86/sysv_intel.S)
-        set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
-        enable_language(ASM_MASM)
+        list(APPEND WIN_ASSEMBLY_LIST src/x86/sysv_intel.S)
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
+        enable_language(ASM_MASM) 
     else()
         list(APPEND SOURCES_LIST ${LIBFFI_SOURCE_DIR}/src/x86/sysv.S)
     endif()
@@ -156,7 +151,7 @@ elseif(TARGET_PLATFORM MATCHES ARM_WIN64|AARCH64)
     if(TARGET_PLATFORM STREQUAL ARM_WIN64)
         set(CMAKE_ASM_MASM_COMPILER ${COMPILER_DIR}/armasm64.exe)
         set(CMAKE_ASM_COMPILER ${CMAKE_ASM_MASM_COMPILER})
-        list(APPEND WIN_ASSEMBLY_LIST ${LIBFFI_SOURCE_DIR}/src/aarch64/win64_armasm.S)
+        list(APPEND WIN_ASSEMBLY_LIST src/aarch64/win64_armasm.S)
         file(COPY ${LIBFFI_SOURCE_DIR}/src/aarch64/ffitarget.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include)
         enable_language(ASM)
     else()
@@ -169,7 +164,7 @@ elseif(TARGET_PLATFORM MATCHES ARM.*)
     if(MSVC)
         set(CMAKE_ASM_MASM_COMPILER ${COMPILER_DIR}/armasm.exe)
         set(CMAKE_ASM_COMPILER ${CMAKE_ASM_MASM_COMPILER})
-        list(APPEND WIN_ASSEMBLY_LIST ${LIBFFI_SOURCE_DIR}/src/arm/sysv_msvc_arm32.S)
+        list(APPEND WIN_ASSEMBLY_LIST src/arm/sysv_msvc_arm32.S)
         file(COPY ${LIBFFI_SOURCE_DIR}/src/arm/ffitarget.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include)
         enable_language(ASM)
     else()
@@ -375,11 +370,11 @@ foreach(ASM_PATH IN LISTS WIN_ASSEMBLY_LIST)
     get_filename_component(ASM_DIRNAME "${ASM_PATH}" DIRECTORY)
 
     add_custom_command(
-        COMMAND "${CMAKE_C_COMPILER}" /nologo /P /EP /I. /I"${CMAKE_CURRENT_SOURCE_DIR}/${ASM_DIRNAME}" /Fi"${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm" /Iinclude
-                /I"${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/${ASM_PATH}"
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ASM_PATH}
+        COMMAND "${CMAKE_C_COMPILER}" /nologo /P /EP /I. /I"${LIBFFI_SOURCE_DIR}/${ASM_DIRNAME}" /Fi"${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm" /Iinclude
+                /I"${LIBFFI_SOURCE_DIR}/include" "${LIBFFI_SOURCE_DIR}/${ASM_PATH}"
+        DEPENDS ${LIBFFI_SOURCE_DIR}/${ASM_PATH}
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm
-        COMMENT "Preprocessing ${CMAKE_CURRENT_SOURCE_DIR}/${ASM_PATH}. Outputting to ${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm")
+        COMMENT "Preprocessing ${LIBFFI_SOURCE_DIR}/${ASM_PATH}. Outputting to ${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm")
 
     set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/${ASM_FILENAME}.asm" PROPERTIES GENERATED TRUE)
 
@@ -403,13 +398,14 @@ file(COPY ${LIBFFI_SOURCE_DIR}/src/${TARGETDIR}/ffitarget.h DESTINATION ${CMAKE_
 
 include_directories(${LIBFFI_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-
+ 
 add_definitions(-DFFI_BUILDING)
+add_definitions(-DFFI_STATIC_BUILD)
 
-add_library(objlib OBJECT ${SOURCES_LIST})
-set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
+add_library(libffi_obj OBJECT ${SOURCES_LIST})
+set_property(TARGET libffi_obj PROPERTY POSITION_INDEPENDENT_CODE 1)
 
-add_library(libffi STATIC $<TARGET_OBJECTS:objlib>)
+add_library(libffi STATIC $<TARGET_OBJECTS:libffi_obj>)
 
 target_include_directories(
   libffi PUBLIC
@@ -418,12 +414,7 @@ target_include_directories(
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 
-#test
-
-
-
-
-# --- Platform and Feature Checks ---
+# generate fficonfig.h
 check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
 check_include_file("sys/mman.h" HAVE_SYS_MMAN_H)
@@ -434,23 +425,18 @@ check_function_exists("memcpy" HAVE_MEMCPY)
 check_function_exists("mmap" HAVE_MMAP)
 check_function_exists("mkostemp" HAVE_MKOSTEMP)
 
-# Set constants directly if needed
 set(EH_FRAME_FLAGS "a")
 set(HAVE_MMAP_ANON 1)
 set(FFI_NO_RAW_API 0)
 set(FFI_NO_STRUCTS 0)
 set(FFI_MMAP_EXEC_WRIT 0)
 
-# Check endianness
 test_big_endian(WORDS_BIGENDIAN)
-
-# Check data type sizes
 
 check_type_size("double" SIZEOF_DOUBLE)
 check_type_size("long double" SIZEOF_LONG_DOUBLE)
 check_type_size("size_t" SIZEOF_SIZE_T)
 
-# Output config header
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/extern/fficonfig.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/include/fficonfig.h

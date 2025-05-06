@@ -38,6 +38,10 @@ add_subdirectory(extern/libuv)
 # Define libuv include directory here, before it's needed by other subdirectories
 set(LIBUV_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/libuv/include)
 
+# libffi setup
+set(FFI_STATIC_BUILD ON)
+include(extern/libffi.cmake)
+
 # boringssl setup
 add_subdirectory(extern/boringssl)
 set(BORINGSSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/boringssl/include)
@@ -83,9 +87,6 @@ include(extern/uWebSockets.cmake)
 
 # Define include directories for uWebSockets and uSockets
 set(UWEBSOCKETS_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/uWebSockets/src)
-
-# libffi setup
-include(extern/libffi.cmake)
 
 # Lute Targets
 
