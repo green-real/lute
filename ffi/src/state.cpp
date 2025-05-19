@@ -22,7 +22,7 @@ FFIState* newFFIState(lua_State* L)
     api_check(getFFIState(L) == nullptr);
 
     FFIState* state = new FFIState(L);
-    FFIState** statePtr = (FFIState**)lua_newuserdatatagged(L, sizeof(FFIState*), kFFIStatePointerTag);
+    FFIState** statePtr = static_cast<FFIState**>(lua_newuserdatatagged(L, sizeof(FFIState*), kFFIStatePointerTag));
     *statePtr = state;
     
     lua_pushlightuserdata(L, statePtr);
@@ -45,7 +45,7 @@ void lua_dtor_FFIStatePointer(lua_State* L, void* p)
     lua_State* GL = lua_mainthread(L);
     GLToFFIStateMap.erase(GL);
 
-    FFIState** state = (FFIState**)p;
+    FFIState** state = static_cast<FFIState**>(p);
     delete *state;
 }
 
