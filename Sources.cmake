@@ -19,6 +19,25 @@ target_sources(Lute.Crypto PRIVATE
     crypto/src/crypto.cpp
 )
 
+target_sources(Lute.FFI PRIVATE
+    ffi/include/lute/ffi.h
+    ffi/include/lute/ffi/ctype.h
+    ffi/include/lute/ffi/state.h
+    ffi/include/lute/ffi/utils.h
+
+    ffi/src/ffi.cpp
+    ffi/src/ffi_c.cpp
+    ffi/src/state.cpp
+    ffi/src/utils.cpp
+
+    # ctype src
+    ffi/src/ctype/array.cpp
+    ffi/src/ctype/base.cpp
+    ffi/src/ctype/core.cpp
+    ffi/src/ctype/func.cpp
+    ffi/src/ctype/pointer.cpp
+    ffi/src/ctype/struct.cpp
+)
 
 target_sources(Lute.Fs PRIVATE
     fs/include/lute/fs.h

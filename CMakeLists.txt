@@ -11,6 +11,7 @@ project(Lute LANGUAGES CXX C VERSION ${LUTE_VERSION})
 
 add_library(Lute.Runtime STATIC)
 add_library(Lute.Crypto STATIC)
+add_library(Lute.FFI STATIC)
 add_library(Lute.Fs STATIC)
 add_library(Lute.Luau STATIC)
 add_library(Lute.Net STATIC)
@@ -36,6 +37,10 @@ add_subdirectory(extern/libuv)
 
 # Define libuv include directory here, before it's needed by other subdirectories
 set(LIBUV_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/libuv/include)
+
+# libffi setup
+set(FFI_STATIC_BUILD ON)
+include(extern/libffi.cmake)
 
 # boringssl setup
 add_subdirectory(extern/boringssl)
@@ -95,6 +100,7 @@ include(Sources.cmake)
 
 target_compile_features(Lute.Runtime PUBLIC cxx_std_17)
 target_compile_features(Lute.Crypto PUBLIC cxx_std_17)
+target_compile_features(Lute.FFI PUBLIC cxx_std_17)
 target_compile_features(Lute.Fs PUBLIC cxx_std_17)
 target_compile_features(Lute.Luau PUBLIC cxx_std_17)
 target_compile_features(Lute.Net PUBLIC cxx_std_17)
@@ -108,6 +114,7 @@ target_compile_features(Lute.Test PUBLIC cxx_std_17)
 
 target_include_directories(Lute.Runtime PUBLIC runtime/include ${LIBUV_INCLUDE_DIR})
 target_include_directories(Lute.Crypto PUBLIC crypto/include ${LIBUV_INCLUDE_DIR})
+target_include_directories(Lute.FFI PUBLIC ffi/include ${LIBUV_INCLUDE_DIR})
 target_include_directories(Lute.Fs PUBLIC fs/include ${LIBUV_INCLUDE_DIR})
 target_include_directories(Lute.Luau PUBLIC luau/include ${LIBUV_INCLUDE_DIR})
 target_include_directories(Lute.Net PUBLIC net/include ${LIBUV_INCLUDE_DIR} ${UWEBSOCKETS_INCLUDE_DIR})
@@ -120,6 +127,7 @@ target_include_directories(Lute.Time PUBLIC time/include ${LIBUV_INCLUDE_DIR})
 
 target_link_libraries(Lute.Runtime PUBLIC Luau.Require PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.VM Lute.Std uv_a)
 target_link_libraries(Lute.Crypto PRIVATE Lute.Runtime Luau.VM uv_a ssl crypto)
+target_link_libraries(Lute.FFI PRIVATE Lute.Runtime Luau.VM uv_a libffi)
 target_link_libraries(Lute.Fs PRIVATE Lute.Runtime Luau.VM uv_a)
 target_link_libraries(Lute.Luau PRIVATE Lute.Runtime Luau.VM uv_a Luau.Analysis Luau.Ast Luau.Compiler)
 target_link_libraries(Lute.Net PRIVATE Lute.Runtime Luau.VM uv_a libcurl uWS)
@@ -128,7 +136,7 @@ target_link_libraries(Lute.VM PRIVATE Lute.Runtime Luau.VM Luau.Require uv_a)
 target_link_libraries(Lute.Process PRIVATE Lute.Runtime Luau.VM uv_a)
 target_link_libraries(Lute.System PRIVATE Lute.Runtime Luau.VM uv_a)
 target_link_libraries(Lute.Time PRIVATE Lute.Runtime Luau.VM uv_a)
-target_link_libraries(Lute.CLI PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.Analysis Luau.VM Lute.Runtime Lute.Crypto Lute.Fs Lute.Luau Lute.Net Lute.Task Lute.VM Lute.Process Lute.System Lute.Time)
+target_link_libraries(Lute.CLI PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.Analysis Luau.VM Lute.Runtime Lute.Crypto Lute.FFI Lute.Fs Lute.Luau Lute.Net Lute.Task Lute.VM Lute.Process Lute.System Lute.Time)
 target_link_libraries(Lute.Test PRIVATE Lute.Runtime)
 
 set(LUTE_OPTIONS)
@@ -149,6 +157,7 @@ endif()
 
 target_compile_options(Lute.Runtime PRIVATE ${LUTE_OPTIONS})
 target_compile_options(Lute.Crypto PRIVATE ${LUTE_OPTIONS})
+target_compile_options(Lute.FFI PRIVATE ${LUTE_OPTIONS})
 target_compile_options(Lute.Fs PRIVATE ${LUTE_OPTIONS})
 target_compile_options(Lute.Luau PRIVATE ${LUTE_OPTIONS})
 target_compile_options(Lute.Net PRIVATE ${LUTE_OPTIONS})

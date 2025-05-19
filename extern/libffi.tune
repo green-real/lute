@@ -1,0 +1,5 @@
+[dependency]
+name = "libffi"
+remote = "https://github.com/libffi/libffi.git"
+branch = "v3.4.8"
+revision = "6a99edb8082f75e523e0d6ebaba42218b80e10c8"
