@@ -18,7 +18,6 @@ FFIState::~FFIState() {}
 
 FFIState* newFFIState(lua_State* L)
 {
-    api_check(L != nullptr);
     api_check(getFFIState(L) == nullptr);
 
     FFIState* state = new FFIState(L);
