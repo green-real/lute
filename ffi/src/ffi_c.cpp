@@ -124,7 +124,7 @@ int openCInterface(lua_State* L)
     initCPointerType(L);
     initCStructType(L);
 
-    lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + (size_t)CBaseTypeKind::__COUNT__);
+    lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + static_cast<std::size_t>(CBaseTypeKind::__COUNT__));
     luaL_register(L, nullptr, clib);
     
 #pragma region CBaseTypes
@@ -137,7 +137,8 @@ int openCInterface(lua_State* L)
 
     ADD_TYPE("bool", CBaseTypeKind::BOOL, ffi_type_sint8);
 
-    ADD_TYPE("char", CBaseTypeKind::CHAR, ((char)-1 < 0 ? ffi_type_schar : ffi_type_uchar));
+    char c = -1;
+    ADD_TYPE("char", CBaseTypeKind::CHAR, (c < 0 ? ffi_type_schar : ffi_type_uchar));
     ADD_TYPE("schar", CBaseTypeKind::SCHAR, ffi_type_schar);
     ADD_TYPE("uchar", CBaseTypeKind::UCHAR, ffi_type_uchar);
 

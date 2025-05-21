@@ -17,7 +17,7 @@ CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft)
     api_check(kind < CBaseTypeKind::__COUNT__);
     api_check(ft != nullptr);
 
-    CType* ct = newCType(L, (CTypeKind)kind, kFFICBaseTypeTag);
+    CType* ct = newCType(L, static_cast<CTypeKind>(kind), kFFICBaseTypeTag);
     ct->ft = ft;
     return ct;
 }
