@@ -12,7 +12,7 @@
 namespace ffi
 {
 
-void makeRegistry(lua_State* L)
+static void makeRegistry(lua_State* L)
 {
     // weak registry
     lua_newtable(L);
