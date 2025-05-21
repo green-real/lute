@@ -16,11 +16,12 @@
 namespace ffi
 {
 
-const ffi_type* getCStructFieldFFIType(lua_State* L, CType* ct, bool dependant)
+static ffi_type* getCStructFieldFFIType(lua_State* L, CType* ct, bool dependant)
 {
     api_check(!dependant || ct->selfref != LUA_NOREF); // if dependant, ct must have a selfref
 
-    return getFFITypeOfCType(ct);
+    // const_cast is safe, because it will never be modified past this point
+    return const_cast<ffi_type*>(getFFITypeOfCType(ct));
 }
 
 CStructFieldType::CStructFieldType(CType* type, std::string name, std::size_t offset, bool dependant) : type(type), name(std::move(name)), offset(offset)
@@ -45,8 +46,7 @@ CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<s
     // build ffi_type elements
     this->ft.elements = new ffi_type*[nfields + 1];
     for (std::size_t i = 0; i < nfields; ++i) {
-        // const_cast is safe, because it will never be modified past this point
-        this->ft.elements[i] = const_cast<ffi_type*>(getCStructFieldFFIType(L, ftypes[i], dependant));
+        this->ft.elements[i] = getCStructFieldFFIType(L, ftypes[i], dependant);
     }
     this->ft.elements[nfields] = nullptr;
 
