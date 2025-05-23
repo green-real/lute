@@ -227,8 +227,8 @@ int handleCTypeNamecall(lua_State* L, CType* ct);
 int handleCTypeToString(lua_State* L, CType* ct);
 
 void retainCType(lua_State* L, int idx);
-void retainCType(lua_State* L, CType* ctype);
-void releaseCType(lua_State* L, CType* ctype);
+void retainCType(lua_State* L, CType* ct);
+void releaseCType(lua_State* L, CType* ct);
 
 bool pushCType(lua_State* L, CType* ctype);
 
