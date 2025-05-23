@@ -10,8 +10,6 @@
 namespace ffi
 {
 
-using FFIState = struct FFIState;
-
 FFIState::FFIState(lua_State* L) {}
 
 FFIState::~FFIState() {}

@@ -6,8 +6,6 @@
 #include <array>
 #include <functional>
 
-using CTypeKind = enum ffi::CTypeKind;
-
 std::string ffiStatusToString(int status)
 {
     switch (status)

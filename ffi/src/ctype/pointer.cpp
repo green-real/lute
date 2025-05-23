@@ -11,9 +11,6 @@
 namespace ffi
 {
 
-using CType = struct CType;
-using CPointerType = struct CPointerType;
-
 CPointerType::CPointerType(lua_State* L, CType* inner, bool dependant) : inner(inner), dependant(dependant) {}
 
 CPointerType::~CPointerType() {}

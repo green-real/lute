@@ -15,9 +15,6 @@
 namespace ffi
 {
 
-using CType = struct CType;
-using CFuncType = struct CFuncType;
-
 static ffi_type* getCFuncArgFFIType(lua_State* L, CType* ct, bool dependant, bool ret = false)
 {
     api_check(ct != nullptr);

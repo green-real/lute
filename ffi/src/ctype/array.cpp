@@ -12,9 +12,6 @@
 namespace ffi
 {
 
-using CType = struct CType;
-using CArrayType = struct CArrayType;
-
 CArrayType::CArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant) : inner(inner), size(size), dependant(dependant)
 {
     ft.type = FFI_TYPE_STRUCT;

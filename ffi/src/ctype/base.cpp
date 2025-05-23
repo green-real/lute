@@ -8,10 +8,6 @@
 namespace ffi
 {
 
-using CType = struct CType;
-using CTypeKind = enum CTypeKind;
-using CBaseTypeKind = enum CBaseTypeKind;
-
 CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft)
 {
     api_check(kind < CBaseTypeKind::__COUNT__);
