@@ -19,3 +19,5 @@ const int kFFICBaseDataTag = 113;
 const int kFFICFuncDataTag = 112;
 const int kFFICPointerDataTag = 111;
 const int kFFICStructDataTag = 110;
+
+const int kFFIDLHandleTag = 109;
