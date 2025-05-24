@@ -37,6 +37,14 @@ target_sources(Lute.FFI PRIVATE
     ffi/src/ctype/func.cpp
     ffi/src/ctype/pointer.cpp
     ffi/src/ctype/struct.cpp
+
+    # cdata src
+    ffi/src/cdata/array.cpp
+    ffi/src/cdata/base.cpp
+    ffi/src/cdata/core.cpp
+    ffi/src/cdata/func.cpp
+    ffi/src/cdata/pointer.cpp
+    ffi/src/cdata/struct.cpp
 )
 
 target_sources(Lute.Fs PRIVATE

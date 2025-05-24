@@ -17,3 +17,5 @@ using CType = struct ffi::CType;
 std::string ffiStatusToString(int status);
 
 l_noret luaL_argerrorf(lua_State* L, int narg, const char* fmt, ...);
+
+std::string resolveDLPath(const std::string& path);
