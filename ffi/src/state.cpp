@@ -28,13 +28,16 @@ FFIState* newFFIState(lua_State* L)
 
     lua_State* GL = lua_mainthread(L);
     GLToFFIStateMap[GL] = state;
+
+    lua_pop(L, 1); // pop the FFIState pointer from the stack
+
     return state;
 }
 
 FFIState* getFFIState(lua_State* L)
 {
     lua_State* GL = lua_mainthread(L);
-    return GLToFFIStateMap.at(GL);
+    return GLToFFIStateMap.find(GL) != GLToFFIStateMap.end() ? GLToFFIStateMap[GL] : nullptr;
 }
 
 void lua_dtor_FFIStatePointer(lua_State* L, void* p)
