@@ -12,7 +12,7 @@
 namespace ffi
 {
 
-CArrayType::CArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant) : inner(inner), size(size), dependant(dependant)
+CArrayType::CArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype) : inner(inner), size(size), releasectype(releasectype)
 {
     ft.type = FFI_TYPE_STRUCT;
     ft.size = sizeOfCType(inner) * size;
@@ -24,20 +24,20 @@ CArrayType::~CArrayType() {}
 
 void CArrayType::releaseDependencies(lua_State* L) const
 {
-    if (this->dependant)
+    if (this->releasectype)
         releaseCType(L, this->inner);
 }
 
-// if dependant, retainCType must have been called on inner before calling newCArrayType
-CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant)
+// if releasectype, retainCType must have been called on inner before calling newCArrayType
+CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype)
 {
     api_check(inner != nullptr);
     api_check(inner->kind != CTypeKind::FUNC);
     api_check(inner->kind != CTypeKind::VOID);
-    api_check(!dependant || inner->selfref != LUA_NOREF);
+    api_check(!releasectype || inner->selfref != LUA_NOREF);
 
     CType* ct = newCType(L, CTypeKind::ARRAY, kFFICArrayTypeTag);
-    ct->array = new CArrayType(L, inner, size, dependant);
+    ct->array = new CArrayType(L, inner, size, releasectype);
     
     return ct;
 }
@@ -57,13 +57,13 @@ CType* checkCArrayType(lua_State* L, int idx)
     return nullptr;
 }
 
-int lua_tostring_CArrayType(lua_State* L)
+static int lua_tostring_CArrayType(lua_State* L)
 {
     CType* ct = checkCArrayType(L, 1);
     return handleCTypeToString(L, ct);
 }
 
-int lua_namecall_CArrayType(lua_State* L)
+static int lua_namecall_CArrayType(lua_State* L)
 {
     CType* ct = checkCArrayType(L, 1);
     const char* method = lua_namecallatom(L, nullptr);

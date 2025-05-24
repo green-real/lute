@@ -11,24 +11,24 @@
 namespace ffi
 {
 
-CPointerType::CPointerType(lua_State* L, CType* inner, bool dependant) : inner(inner), dependant(dependant) {}
+CPointerType::CPointerType(lua_State* L, CType* inner, bool releasectype) : inner(inner), releasectype(releasectype) {}
 
 CPointerType::~CPointerType() {}
 
 void CPointerType::releaseDependencies(lua_State* L) const
 {
-    if (this->dependant)
+    if (this->releasectype)
         releaseCType(L, this->inner);
 }
 
-// if dependant, retainCType must have been called on inner before calling newCPointerType
-CType* newCPointerType(lua_State* L, CType* inner, bool dependant)
+// if releasectype, retainCType must have been called on inner before calling newCPointerType
+CType* newCPointerType(lua_State* L, CType* inner, bool releasectype)
 {
     api_check(inner != nullptr);
-    api_check(!dependant || inner->selfref != LUA_NOREF);
+    api_check(!releasectype || inner->selfref != LUA_NOREF);
     
     CType* ct = newCType(L, CTypeKind::POINTER, kFFICPointerTypeTag);
-    ct->ptr = new CPointerType(L, inner, dependant);
+    ct->ptr = new CPointerType(L, inner, releasectype);
     
     return ct;
 }
@@ -48,13 +48,13 @@ CType* checkCPointerType(lua_State* L, int idx)
     return nullptr;
 }
 
-int lua_tostring_CPointerType(lua_State* L)
+static int lua_tostring_CPointerType(lua_State* L)
 {
     CType* ct = checkCPointerType(L, 1);
     return handleCTypeToString(L, ct);
 }
 
-int lua_namecall_CPointerType(lua_State* L)
+static int lua_namecall_CPointerType(lua_State* L)
 {
     CType* ct = checkCPointerType(L, 1);
     const char* method = lua_namecallatom(L, nullptr);

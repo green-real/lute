@@ -118,41 +118,41 @@ struct CArrayType {
     CType* inner;
     std::size_t size;
     ffi_type ft;
-    bool dependant; // if true, CArrayType will call releaseCType on inner when garbage collected
+    bool releasectype; // if true, CArrayType will call releaseCType on inner when garbage collected
 
     void releaseDependencies(lua_State* L) const;
     ~CArrayType();
 private:
-    CArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant);
-    friend CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant);
+    CArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
+    friend CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
 };
 
 struct CFuncType {
     CType* ret;
     std::vector<CType*> args;
     ffi_cif cif;
-    bool dependant; // if true, CFunctionType will call releaseCType on ret and args when garbage collected
+    bool releasectype; // if true, CFunctionType will call releaseCType on ret and args when garbage collected
     ffi_abi abi;
 
     void releaseDependencies(lua_State* L) const;
     ~CFuncType();
 
 private:
-    CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool dependant, int& ffi_status);
+    CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, int& ffi_status);
 
-    friend CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool dependant);
+    friend CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype);
 };
 
 struct CPointerType {
     CType* inner;
-    bool dependant; // if true, CPointerType will call releaseCType on inner when garbage collected
+    bool releasectype; // if true, CPointerType will call releaseCType on inner when garbage collected
 
     void releaseDependencies(lua_State* L) const;
     ~CPointerType();
 
 private:
-    CPointerType(lua_State* L, CType* inner, bool dependant);
-    friend CType* newCPointerType(lua_State* L, CType* inner, bool dependant);
+    CPointerType(lua_State* L, CType* inner, bool releasectype);
+    friend CType* newCPointerType(lua_State* L, CType* inner, bool releasectype);
 };
 
 struct CStructFieldType {
@@ -161,7 +161,7 @@ struct CStructFieldType {
     std::size_t offset;
 
 private:
-    CStructFieldType(CType* type, std::string name, std::size_t offset, bool dependant);
+    CStructFieldType(CType* type, std::string name, std::size_t offset, bool releasectype);
 
     friend CStructType;
 };
@@ -171,15 +171,15 @@ struct CStructType {
     std::unordered_map<std::string, std::size_t> field_map;
     std::string debugname;
     ffi_type ft;
-    bool dependant; // if true, CStructType will call releaseCType on its struct field types when garbage collected
+    bool releasectype; // if true, CStructType will call releaseCType on its struct field types when garbage collected
 
     void releaseDependencies(lua_State* L) const;
     ~CStructType();
 
 private:
-    CStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool dependant, int& ffi_status);
+    CStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype, int& ffi_status);
 
-    friend CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool dependant);
+    friend CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype);
 };
 
 struct CType {
@@ -196,11 +196,11 @@ struct CType {
 };
 
 CType* newCType(lua_State* L, CTypeKind kind, int utag);
-CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool dependant);
+CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
 CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft);
-CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool dependant);
-CType* newCPointerType(lua_State* L, CType* inner, bool dependant);
-CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool dependant);
+CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype);
+CType* newCPointerType(lua_State* L, CType* inner, bool releasectype);
+CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype);
 
 CType* toCType(lua_State* L, int idx);
 CType* toCArrayType(lua_State* L, int idx);

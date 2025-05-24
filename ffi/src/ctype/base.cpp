@@ -33,13 +33,13 @@ CType* checkCBaseType(lua_State* L, int idx)
     return nullptr;
 }
 
-int lua_tostring_CBaseType(lua_State* L)
+static int lua_tostring_CBaseType(lua_State* L)
 {
     CType* ct = checkCBaseType(L, 1);
     return handleCTypeToString(L, ct);
 }
 
-int lua_namecall_CBaseType(lua_State* L)
+static int lua_namecall_CBaseType(lua_State* L)
 {
     CType* ct = checkCBaseType(L, 1);
     const char* method = lua_namecallatom(L, nullptr);

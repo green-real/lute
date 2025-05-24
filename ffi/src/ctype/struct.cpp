@@ -16,24 +16,24 @@
 namespace ffi
 {
 
-static ffi_type* getCStructFieldFFIType(lua_State* L, CType* ct, bool dependant)
+static ffi_type* getCStructFieldFFIType(lua_State* L, CType* ct, bool releasectype)
 {
-    api_check(!dependant || ct->selfref != LUA_NOREF); // if dependant, ct must have a selfref
+    api_check(!releasectype || ct->selfref != LUA_NOREF); // if releasectype, ct must have a selfref
 
     // const_cast is safe, because it will never be modified past this point
     return const_cast<ffi_type*>(getFFITypeOfCType(ct));
 }
 
-CStructFieldType::CStructFieldType(CType* type, std::string name, std::size_t offset, bool dependant) : type(type), name(std::move(name)), offset(offset)
+CStructFieldType::CStructFieldType(CType* type, std::string name, std::size_t offset, bool releasectype) : type(type), name(std::move(name)), offset(offset)
 {
     api_check(type != nullptr);
     api_check(type->kind != CTypeKind::FUNC);
     api_check(type->kind != CTypeKind::VOID);
-    api_check(!dependant || type->selfref != LUA_NOREF);
+    api_check(!releasectype || type->selfref != LUA_NOREF);
 }
 
-CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<std::string> fnames, std::string debugname, bool dependant, int& ffi_status)
-    : debugname(std::move(debugname)), dependant(dependant)
+CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<std::string> fnames, std::string debugname, bool releasectype, int& ffi_status)
+    : debugname(std::move(debugname)), releasectype(releasectype)
 {
     this->ft.type = FFI_TYPE_STRUCT;
     this->ft.size = 0;
@@ -46,7 +46,7 @@ CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<s
     // build ffi_type elements
     this->ft.elements = new ffi_type*[nfields + 1];
     for (std::size_t i = 0; i < nfields; ++i) {
-        this->ft.elements[i] = getCStructFieldFFIType(L, ftypes[i], dependant);
+        this->ft.elements[i] = getCStructFieldFFIType(L, ftypes[i], releasectype);
     }
     this->ft.elements[nfields] = nullptr;
 
@@ -67,7 +67,7 @@ CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<s
             offset = offsets[j++];
         }
 
-        this->fields.push_back(CStructFieldType(ftypes[i], std::move(fnames[i]), offset, dependant));
+        this->fields.push_back(CStructFieldType(ftypes[i], std::move(fnames[i]), offset, releasectype));
     }
     delete[] offsets;
 
@@ -87,20 +87,20 @@ CStructType::~CStructType()
 
 void CStructType::releaseDependencies(lua_State* L) const
 {
-    if (!this->dependant) return;
+    if (!this->releasectype) return;
 
     for (CStructFieldType field : this->fields) {
         releaseCType(L, field.type);
     }
 }
 
-// if dependant is true, retainCType must have been called on each field type before calling newCStructType
-CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool dependant)
+// if releasectype is true, retainCType must have been called on each field type before calling newCStructType
+CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype)
 {
     int ffi_status;
 
     CType* ct = newCType(L, CTypeKind::STRUCT, kFFICStructTypeTag);
-    ct->struct_ = new CStructType(L, ftypes, fnames, debugname, dependant, ffi_status);
+    ct->struct_ = new CStructType(L, ftypes, fnames, debugname, releasectype, ffi_status);
     
     if (LUAU_UNLIKELY(ffi_status != FFI_OK)) {
         luaL_errorL(L, "ffi_struct_offsets fail: %s", ffiStatusToString(ffi_status).c_str());
@@ -124,13 +124,13 @@ CType* checkCStructType(lua_State* L, int idx)
     return nullptr;
 }
 
-int lua_tostring_CStructType(lua_State* L)
+static int lua_tostring_CStructType(lua_State* L)
 {
     CType* ct = checkCStructType(L, 1);
     return handleCTypeToString(L, ct);
 }
 
-int lua_namecall_CStructType(lua_State* L)
+static int lua_namecall_CStructType(lua_State* L)
 {
     CType* ct = checkCStructType(L, 1);
     const char* method = lua_namecallatom(L, nullptr);

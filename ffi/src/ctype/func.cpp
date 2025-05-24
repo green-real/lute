@@ -15,12 +15,12 @@
 namespace ffi
 {
 
-static ffi_type* getCFuncArgFFIType(lua_State* L, CType* ct, bool dependant, bool ret = false)
+static ffi_type* getCFuncArgFFIType(lua_State* L, CType* ct, bool releasectype, bool ret = false)
 {
     api_check(ct != nullptr);
     api_check(ct->kind != CTypeKind::FUNC);
     api_check(ct->kind != CTypeKind::VOID || ret);
-    api_check(!dependant || ct->selfref != LUA_NOREF);
+    api_check(!releasectype || ct->selfref != LUA_NOREF);
 
     if (ct->kind == CTypeKind::ARRAY) 
         return &ffi_type_pointer;
@@ -29,15 +29,15 @@ static ffi_type* getCFuncArgFFIType(lua_State* L, CType* ct, bool dependant, boo
     return const_cast<ffi_type*>(getFFITypeOfCType(ct));
 }
 
-CFuncType::CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool dependant, int& ffi_status) : ret(ret), args(std::move(args)), dependant(dependant), abi(abi)
+CFuncType::CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, int& ffi_status) : ret(ret), args(std::move(args)), releasectype(releasectype), abi(abi)
 {
     int nargs = this->args.size();
 
     // validate types and build cif.arg_types
-    ffi_type* ret_ft = getCFuncArgFFIType(L, this->ret, this->dependant, true);
+    ffi_type* ret_ft = getCFuncArgFFIType(L, this->ret, this->releasectype, true);
     ffi_type** arg_ftypes = new ffi_type*[nargs];
     for (std::uint8_t i = 0; i < nargs; ++i) {
-        arg_ftypes[i] = getCFuncArgFFIType(L, this->args[i], this->dependant);
+        arg_ftypes[i] = getCFuncArgFFIType(L, this->args[i], this->releasectype);
     }
 
     // this sets this->cif.arg_types to arg_ftypes, which is freed by ~CFuncType
@@ -51,20 +51,20 @@ CFuncType::~CFuncType()
 
 void CFuncType::releaseDependencies(lua_State* L) const
 {
-    if (!this->dependant) return;
+    if (!this->releasectype) return;
 
     releaseCType(L, this->ret);
     for (CType* arg : this->args)
         releaseCType(L, arg);
 }
 
-// if dependant, retainCType must have been called on ret and args before calling newCFuncType
-CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool dependant)
+// if releasectype, retainCType must have been called on ret and args before calling newCFuncType
+CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype)
 {
     int ffi_status;
 
     CType* ct = newCType(L, CTypeKind::FUNC, kFFICFuncTypeTag);
-    ct->func = new CFuncType(L, ret, std::move(args), abi, dependant, ffi_status);
+    ct->func = new CFuncType(L, ret, std::move(args), abi, releasectype, ffi_status);
 
     if (ffi_status != FFI_OK)
         luaL_errorL(L, "ffi_prep_cif fail: %s", ffiStatusToString(ffi_status).c_str());
@@ -87,13 +87,13 @@ CType* checkCFuncType(lua_State* L, int idx)
     return nullptr;
 }
 
-int lua_tostring_CFuncType(lua_State* L)
+static int lua_tostring_CFuncType(lua_State* L)
 {
     CType* ct = checkCFuncType(L, 1);
     return handleCTypeToString(L, ct);
 }
 
-int lua_namecall_CFuncType(lua_State* L)
+static int lua_namecall_CFuncType(lua_State* L)
 {
     CType* ct = checkCFuncType(L, 1);
     const char* method = lua_namecallatom(L, nullptr);

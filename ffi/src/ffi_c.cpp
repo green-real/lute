@@ -51,7 +51,7 @@ int lua_cfunc(lua_State* L)
             luaL_argerrorf(L, 2, "at index %d, element type should not not be void", i + 1);
     }
 
-    // now that we validated the arguments, we can safely retain them and make the CFuncType dependant 
+    // now that we validated the arguments, we can safely retain them and make the CFuncType releasectype 
     retainCType(L, 1);
     for (std::size_t i = 0; i < nargs; ++i) {
         retainCType(L, -1);
@@ -98,7 +98,7 @@ int lua_cstruct(lua_State* L)
         lua_remove(L, -2); // only remove the array, keep the CType on the stack
     }
 
-    // now that we validated the arguments, we can safely retain them and make the CStructType dependant 
+    // now that we validated the arguments, we can safely retain them and make the CStructType releasectype 
     for (std::size_t i = 0; i < nfields; ++i) {
         retainCType(L, -1);
         lua_pop(L, 1);
