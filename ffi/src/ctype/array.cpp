@@ -12,11 +12,11 @@
 namespace ffi
 {
 
-CArrayType::CArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype) : inner(inner), size(size), releasectype(releasectype)
+CArrayType::CArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype) : elemtype(elemtype), size(size), releasectype(releasectype)
 {
     ft.type = FFI_TYPE_STRUCT;
-    ft.size = sizeOfCType(inner) * size;
-    ft.alignment = getFFITypeOfCType(inner)->alignment;
+    ft.size = sizeOfCType(elemtype) * size;
+    ft.alignment = getFFITypeOfCType(elemtype)->alignment;
     ft.elements = nullptr;
 }
 
@@ -25,19 +25,19 @@ CArrayType::~CArrayType() {}
 void CArrayType::releaseDependencies(lua_State* L) const
 {
     if (this->releasectype)
-        releaseCType(L, this->inner);
+        releaseCType(L, this->elemtype);
 }
 
 // if releasectype, retainCType must have been called on inner before calling newCArrayType
-CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype)
+CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype)
 {
-    api_check(inner != nullptr);
-    api_check(inner->kind != CTypeKind::FUNC);
-    api_check(inner->kind != CTypeKind::VOID);
-    api_check(!releasectype || inner->selfref != LUA_NOREF);
+    api_check(elemtype != nullptr);
+    api_check(elemtype->kind != CTypeKind::FUNC);
+    api_check(elemtype->kind != CTypeKind::VOID);
+    api_check(!releasectype || elemtype->selfref != LUA_NOREF);
 
     CType* ct = newCType(L, CTypeKind::ARRAY, kFFICArrayTypeTag);
-    ct->array = new CArrayType(L, inner, size, releasectype);
+    ct->array = new CArrayType(L, elemtype, size, releasectype);
     
     return ct;
 }

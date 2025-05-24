@@ -11,24 +11,24 @@
 namespace ffi
 {
 
-CPointerType::CPointerType(lua_State* L, CType* inner, bool releasectype) : inner(inner), releasectype(releasectype) {}
+CPointerType::CPointerType(lua_State* L, CType* innertype, bool releasectype) : innertype(innertype), releasectype(releasectype) {}
 
 CPointerType::~CPointerType() {}
 
 void CPointerType::releaseDependencies(lua_State* L) const
 {
     if (this->releasectype)
-        releaseCType(L, this->inner);
+        releaseCType(L, this->innertype);
 }
 
 // if releasectype, retainCType must have been called on inner before calling newCPointerType
-CType* newCPointerType(lua_State* L, CType* inner, bool releasectype)
+CType* newCPointerType(lua_State* L, CType* innertype, bool releasectype)
 {
-    api_check(inner != nullptr);
-    api_check(!releasectype || inner->selfref != LUA_NOREF);
+    api_check(innertype != nullptr);
+    api_check(!releasectype || innertype->selfref != LUA_NOREF);
     
     CType* ct = newCType(L, CTypeKind::POINTER, kFFICPointerTypeTag);
-    ct->ptr = new CPointerType(L, inner, releasectype);
+    ct->ptr = new CPointerType(L, innertype, releasectype);
     
     return ct;
 }

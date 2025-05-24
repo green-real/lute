@@ -143,7 +143,7 @@ std::string toStringCType(CType* ct)
 
         switch (t->kind) {
         case CTypeKind::ARRAY:
-            writeType(t->array->inner, depth);
+            writeType(t->array->elemtype, depth);
             ss << '[' << t->array->size << ']';
             break;
         case CTypeKind::FUNC:
@@ -157,7 +157,7 @@ std::string toStringCType(CType* ct)
             ss << ')';
             break;
         case CTypeKind::POINTER:
-            writeType(t->ptr->inner, depth);
+            writeType(t->ptr->innertype, depth);
             if (first_pointer) {
                 ss << ' ';
                 first_pointer = false;

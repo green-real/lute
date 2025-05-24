@@ -115,7 +115,7 @@ enum class CBaseTypeKind {
 };
 
 struct CArrayType {
-    CType* inner;
+    CType* elemtype;
     std::size_t size;
     ffi_type ft;
     bool releasectype; // if true, CArrayType will call releaseCType on inner when garbage collected
@@ -123,8 +123,8 @@ struct CArrayType {
     void releaseDependencies(lua_State* L) const;
     ~CArrayType();
 private:
-    CArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
-    friend CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
+    CArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
+    friend CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
 };
 
 struct CFuncType {
@@ -144,15 +144,15 @@ private:
 };
 
 struct CPointerType {
-    CType* inner;
+    CType* innertype;
     bool releasectype; // if true, CPointerType will call releaseCType on inner when garbage collected
 
     void releaseDependencies(lua_State* L) const;
     ~CPointerType();
 
 private:
-    CPointerType(lua_State* L, CType* inner, bool releasectype);
-    friend CType* newCPointerType(lua_State* L, CType* inner, bool releasectype);
+    CPointerType(lua_State* L, CType* innertype, bool releasectype);
+    friend CType* newCPointerType(lua_State* L, CType* innertype, bool releasectype);
 };
 
 struct CStructFieldType {
@@ -196,10 +196,10 @@ struct CType {
 };
 
 CType* newCType(lua_State* L, CTypeKind kind, int utag);
-CType* newCArrayType(lua_State* L, CType* inner, std::size_t size, bool releasectype);
+CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
 CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft);
 CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype);
-CType* newCPointerType(lua_State* L, CType* inner, bool releasectype);
+CType* newCPointerType(lua_State* L, CType* innertype, bool releasectype);
 CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype);
 
 CType* toCType(lua_State* L, int idx);
