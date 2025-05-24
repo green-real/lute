@@ -86,24 +86,24 @@ int handleCTypeToString(lua_State* L, CType* ct)
 // increments the refcount and retains the CType
 void retainCType(lua_State* L, int idx)
 {
-    CType* ctype = toCType(L, idx);
-    api_check(ctype != nullptr);
-    api_check(ctype->refcount != 0 || ctype->selfref == LUA_NOREF);
+    CType* ct = toCType(L, idx);
+    api_check(ct != nullptr);
+    api_check(ct->refcount != 0 || ct->selfref == LUA_NOREF);
 
-    ctype->refcount++;
-    if (ctype->selfref == LUA_NOREF)
-        ctype->selfref = lua_ref(L, idx); 
+    ct->refcount++;
+    if (ct->selfref == LUA_NOREF)
+        ct->selfref = lua_ref(L, idx); 
 }
 
 // retains a CType that is currently retained, so that it is not garbage collected until it is released
 // this should only be used when the CType is already retained
-void retainCType(lua_State* L, CType* ctype)
+void retainCType(lua_State* L, CType* ct)
 {
-    api_check(ctype != nullptr);
-    api_check(ctype->refcount != 0);
-    api_check(ctype->selfref != LUA_NOREF);
+    api_check(ct != nullptr);
+    api_check(ct->refcount != 0);
+    api_check(ct->selfref != LUA_NOREF);
 
-    ctype->refcount++;
+    ct->refcount++;
 }
 
 // releases a CType previously retained by retainCType
