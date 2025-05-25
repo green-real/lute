@@ -131,16 +131,17 @@ struct CFuncType {
     CType* ret;
     std::vector<CType*> args;
     ffi_cif cif;
-    bool releasectype; // if true, CFunctionType will call releaseCType on ret and args when garbage collected
     ffi_abi abi;
+    bool releasectype; // if true, CFunctionType will call releaseCType on ret and args when garbage collected
+    std::string symbol; // symbol name for this function type, if any
 
     void releaseDependencies(lua_State* L) const;
     ~CFuncType();
 
 private:
-    CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, int& ffi_status);
+    CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, std::string symbol, int& ffi_status);
 
-    friend CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype);
+    friend CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, std::string symbol);
 };
 
 struct CPointerType {
@@ -198,7 +199,7 @@ struct CType {
 CType* newCType(lua_State* L, CTypeKind kind, int utag);
 CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
 CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft);
-CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype);
+CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, std::string symbol);
 CType* newCPointerType(lua_State* L, CType* innertype, bool releasectype);
 CType* newCStructType(lua_State* L, std::vector<CType*> ftypes,std::vector<std::string> fnames, std::string debugname, bool releasectype);
 
