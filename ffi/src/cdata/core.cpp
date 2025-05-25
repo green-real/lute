@@ -195,7 +195,7 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
         }
         
         std::size_t cdsize = getFFITypeOfCType(cd->type)->size;
-        if (cdsize == size) {
+        if (cdsize != size) {
             luaL_argerrorf(L, idx, "CData size %d is not equal to size %d for %s<%s>", (int)cdsize, (int)size, getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
         }
 
