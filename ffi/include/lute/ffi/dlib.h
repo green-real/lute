@@ -12,12 +12,6 @@ using FFIDLHandle = struct FFIDLHandle;
 
 static const char kFFIDLHandle[] = "FFIDLHandle";
 
-#ifdef _WIN32
-static const char kLibCDL[] = "ucrtbase.dll";
-#else
-static const char kLibCDL[] = "libc.so.6";
-#endif
-
 struct FFIDLHandle
 {
     void* handle;

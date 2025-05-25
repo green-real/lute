@@ -65,7 +65,18 @@ int luteopen_ffi(lua_State* L)
     ffi::openCInterface(L);
     lua_setfield(L, -2, ffi::kCInterfaceProperty);
 
-    ffi::newFFIDLHandle(L, ffi::kLibCDL);
+    #ifdef _WIN32
+    const char* kLibCDL = "msvcrt.dll";
+    HMODULE ucrtbase = LoadLibraryA("ucrtbase.dll");
+    if (ucrtbase) {
+        kLibCDL = "ucrtbase.dll";
+        FreeLibrary(ucrtbase);
+    }
+    #else
+    const char* kLibCDL = "libc.so.6";
+    #endif
+
+    ffi::newFFIDLHandle(L, kLibCDL);
     lua_setfield(L, -2, ffi::kLibCDLProperty);
 
     lua_setreadonly(L, -1, 1);
