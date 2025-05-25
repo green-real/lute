@@ -107,6 +107,13 @@ static int lua_call_CFuncData(lua_State* L)
     return (retcd == nullptr && ret_data) ? 1 : 0;
 }
 
+static int lua_index_CFuncData(lua_State* L)
+{
+    CData* cd = checkCFuncData(L, 1);
+
+    return handleCDataIndex(L, cd);
+}
+
 static int lua_namecall_CFuncData(lua_State* L)
 {
     CData* cd = checkCFuncData(L, 1);
@@ -117,6 +124,14 @@ static int lua_namecall_CFuncData(lua_State* L)
     }
     
     if (strcmp(method, "setret") == 0) {
+        if (lua_isnil(L, 2)) {
+            if (cd->funcdata->retcd != nullptr) {
+                releaseCData(L, cd->funcdata->retcd);
+                cd->funcdata->retcd = nullptr;
+            }
+            return 0;
+        }
+
         CData* ret = checkCData(L, 2);
         CType* rettype = ret->type;
         if (rettype->kind != cd->type->func->ret->kind) {
@@ -179,11 +194,17 @@ void initCFuncData(lua_State* L)
     lua_pushcfunction(L, lua_call_CFuncData, "kCFuncData.__call");
     lua_setfield(L, -2, "__call");
 
-    lua_pushcfunction(L, lua_tostring_CFuncData, "kCFuncData.__tostring");
-    lua_setfield(L, -2, "__tostring");
+    lua_pushcfunction(L, lua_index_CFuncData, "kCFuncData.__index");
+    lua_setfield(L, -2, "__index");
 
     lua_pushcfunction(L, lua_namecall_CFuncData, "kCFuncData.__namecall");
     lua_setfield(L, -2, "__namecall");
+
+    lua_pushcfunction(L, lua_tostring_CFuncData, "kCFuncData.__tostring");
+    lua_setfield(L, -2, "__tostring");
+
+    lua_pushstring(L, kCFuncData);
+    lua_setfield(L, -2, "__type");
 
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);

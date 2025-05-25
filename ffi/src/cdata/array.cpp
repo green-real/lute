@@ -51,29 +51,33 @@ static int lua_index_CArrayData(lua_State* L)
     CData* cd = checkCArrayData(L, 1);
     CType* ct = cd->type;
 
-    int idx = luaL_checkinteger(L, 2);
-    if (idx < 0 || idx >= static_cast<int>(ct->array->size)) {
-        luaL_argerrorf(L, 2, "index %d out of bounds for array of size %d", idx, (int)ct->array->size);
+    if (lua_isnumber(L, 2)) {
+        int idx = luaL_checkinteger(L, 2);
+        if ((double)idx != lua_tonumber(L, 2)) {
+            luaL_argerror(L, 2, "index must be an integer");
+        } else if (idx < 0 || idx >= static_cast<int>(ct->array->size)) {
+            luaL_argerrorf(L, 2, "index %d out of bounds for array of size %d", idx, (int)ct->array->size);
+        }
+
+        std::size_t elemsize = getFFITypeOfCType(ct->array->elemtype)->size;
+        void* elemdata = static_cast<char*>(cd->data) + idx * elemsize;
+
+        retainCData(L, 1);
+        retainCType(L, ct->array->elemtype);
+        if (ct->array->elemtype->kind == CTypeKind::POINTER) {
+            newCPointerData(L, ct->array->elemtype, elemdata, true, false, false, cd);
+        } else {
+            newCData(L, ct->array->elemtype, elemdata, true, false, cd);
+        }
     }
 
-    std::size_t elemsize = getFFITypeOfCType(ct->array->elemtype)->size;
-    void* elemdata = static_cast<char*>(cd->data) + idx * elemsize;
-
-    retainCData(L, 1);
-    retainCType(L, ct->array->elemtype);
-    if (ct->array->elemtype->kind == CTypeKind::POINTER) {
-        newCPointerData(L, ct->array->elemtype, elemdata, true, false, false, cd);
-    } else {
-        newCData(L, ct->array->elemtype, elemdata, true, false, cd);
-    }
-
-    return 1;
+    return handleCDataIndex(L, cd);
 }
 
 static int lua_namecall_CArrayData(lua_State* L)
 {
     CData* cd = checkCArrayData(L, 1);
-    
+
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CArrayData with invalid method");
@@ -112,6 +116,9 @@ void initCArrayData(lua_State* L)
 
     lua_pushcfunction(L, lua_namecall_CArrayData, "kCArrayData.__namecall");
     lua_setfield(L, -2, "__namecall");
+
+    lua_pushstring(L, kCArrayData);
+    lua_setfield(L, -2, "__type");
 
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);

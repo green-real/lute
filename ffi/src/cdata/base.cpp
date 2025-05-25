@@ -164,10 +164,17 @@ int pushLuaNumberFromCData(lua_State* L, void* data, CType* ct)
     return 1;
 }
 
+static int lua_index_CBaseData(lua_State* L)
+{
+    CData* cd = checkCBaseData(L, 1);
+
+    return handleCDataIndex(L, cd);
+}
+
 static int lua_namecall_CBaseData(lua_State* L)
 {
     CData* cd = checkCBaseData(L, 1);
-    
+
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CBaseData with invalid method");
@@ -198,11 +205,17 @@ void initCBaseData(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_tostring_CBaseData, "kCBaseData.__tostring");
-    lua_setfield(L, -2, "__tostring");
+    lua_pushcfunction(L, lua_index_CBaseData, "kCBaseData.__index");
+    lua_setfield(L, -2, "__index");
 
     lua_pushcfunction(L, lua_namecall_CBaseData, "kCBaseData.__namecall");
     lua_setfield(L, -2, "__namecall");
+
+    lua_pushcfunction(L, lua_tostring_CBaseData, "kCBaseData.__tostring");
+    lua_setfield(L, -2, "__tostring");
+
+    lua_pushstring(L, kCBaseData);
+    lua_setfield(L, -2, "__type");
 
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);

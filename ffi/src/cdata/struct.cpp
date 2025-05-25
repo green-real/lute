@@ -70,7 +70,33 @@ void writeLuaTableToCStruct(lua_State* L, int idx, void* data, CType* ct)
 
 static int lua_index_CStructData(lua_State* L)
 {
-    // CData* cd = checkCStructData(L, 1);
+    CData* cd = checkCStructData(L, 1);
+    CType* ct = cd->type;
+
+    if (lua_type(L, 2) == LUA_TSTRING) {
+        const char* field_name = lua_tostring(L, 2);
+        if (field_name == nullptr) {
+            luaL_argerror(L, 2, "field name must be a string");
+        }
+
+        auto it = ct->struct_->field_map.find(field_name);
+        if (it != ct->struct_->field_map.end()) {
+            std::size_t offset = ct->struct_->fields[it->second].offset;
+            CType* field_type = ct->struct_->fields[it->second].type;
+
+            void* field_data = static_cast<char*>(cd->data) + offset;
+
+            retainCData(L, 1);
+            retainCType(L, field_type);
+            if (field_type->kind == CTypeKind::POINTER) {
+                newCPointerData(L, field_type, field_data, true, false, false, cd);
+            } else {
+                newCData(L, field_type, field_data, true, false, cd);
+            }
+
+            return 1;
+        }        
+    }
 
     return 0;
 }
@@ -78,7 +104,7 @@ static int lua_index_CStructData(lua_State* L)
 static int lua_namecall_CStructData(lua_State* L)
 {
     CData* cd = checkCStructData(L, 1);
-    
+
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CStructData with invalid method");
@@ -112,11 +138,14 @@ void initCStructData(lua_State* L)
     lua_pushcfunction(L, lua_index_CStructData, "kCStructData.__index");
     lua_setfield(L, -2, "__index");
 
+    lua_pushcfunction(L, lua_namecall_CStructData, "kCStructData.__namecall");
+    lua_setfield(L, -2, "__namecall");
+
     lua_pushcfunction(L, lua_tostring_CStructData, "kCStructData.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CStructData, "kCStructData.__namecall");
-    lua_setfield(L, -2, "__namecall");
+    lua_pushstring(L, kCStructData);
+    lua_setfield(L, -2, "__type");
 
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);

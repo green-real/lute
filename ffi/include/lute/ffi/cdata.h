@@ -92,6 +92,7 @@ void writeLuaTableToCStruct(lua_State* L, int idx, void* data, CType* ct);
 int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx = 0);
 int pushLuaNumberFromCData(lua_State* L, void* data, CType* ct);
 
+int handleCDataIndex(lua_State* L, CData* cd);
 int handleCDataNamecall(lua_State* L, CData* cd);
 int handleCDataToString(lua_State* L, CData* cd);
 void handleCDataDtor(lua_State* L, CData* cd);

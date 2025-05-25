@@ -223,7 +223,8 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
         if (elemtype->kind == CTypeKind::CHAR
             || elemtype->kind == CTypeKind::UCHAR
             || elemtype->kind == CTypeKind::SCHAR) {
-            lua_pushlstring(L, static_cast<const char*>(data), size);
+            const char* str = static_cast<const char*>(data);
+            lua_pushlstring(L, str, strlen(str));
             return 1;
         }
 
@@ -291,9 +292,19 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
 
 }
 
+int handleCDataIndex(lua_State* L, CData* cd)
+{
+    api_check(cd != nullptr);
+    api_check(cd->type != nullptr);
+
+    luaL_error(L, "attempt to index %s with invalid index", getUDNameCData(cd).c_str());
+    return 0;
+}
+
 int handleCDataNamecall(lua_State* L, CData* cd)
 {
     api_check(cd != nullptr);
+    api_check(cd->type != nullptr);
 
     const char* method = lua_namecallatom(L, nullptr);
     api_check(method != nullptr);
