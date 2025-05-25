@@ -153,9 +153,8 @@ void lua_dtor_CFuncData(lua_State* L, void* ud)
     
     free(ct->funcdata->args);
     for (size_t i = 0; i < ct->type->func->args.size(); ++i) {
-        if (ct->funcdata->argstorage[i] != nullptr) {
-            free(ct->funcdata->argstorage[i]);
-        }
+        if (ct->funcdata->argstorage[i] == nullptr) continue;
+        free(ct->funcdata->argstorage[i]);
     }
     free(ct->funcdata->argstorage);
 

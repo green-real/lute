@@ -146,6 +146,7 @@ static int lua_namecall_CStructType(lua_State* L)
 void lua_dtor_CStructType(lua_State* L, void* ud)
 {
     CType* ct = static_cast<CType*>(ud);
+
     ct->struct_->releaseDependencies(L);
     delete ct->struct_;
 }

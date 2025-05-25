@@ -17,8 +17,9 @@ CPointerType::~CPointerType() {}
 
 void CPointerType::releaseDependencies(lua_State* L) const
 {
-    if (this->releasectype)
-        releaseCType(L, this->innertype);
+    if (!this->releasectype) return;
+
+    releaseCType(L, this->innertype);
 }
 
 // if releasectype, retainCType must have been called on inner before calling newCPointerType

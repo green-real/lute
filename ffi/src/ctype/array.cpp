@@ -24,8 +24,9 @@ CArrayType::~CArrayType() {}
 
 void CArrayType::releaseDependencies(lua_State* L) const
 {
-    if (this->releasectype)
-        releaseCType(L, this->elemtype);
+    if (!this->releasectype) return;
+
+    releaseCType(L, this->elemtype);
 }
 
 // if releasectype, retainCType must have been called on inner before calling newCArrayType

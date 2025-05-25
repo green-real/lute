@@ -54,8 +54,9 @@ void CFuncType::releaseDependencies(lua_State* L) const
     if (!this->releasectype) return;
 
     releaseCType(L, this->ret);
-    for (CType* arg : this->args)
+    for (CType* arg : this->args) {
         releaseCType(L, arg);
+    }
 }
 
 // if releasectype, retainCType must have been called on ret and args before calling newCFuncType
@@ -66,8 +67,9 @@ CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi 
     CType* ct = newCType(L, CTypeKind::FUNC, kFFICFuncTypeTag);
     ct->func = new CFuncType(L, ret, std::move(args), abi, releasectype, ffi_status);
 
-    if (ffi_status != FFI_OK)
+    if (ffi_status != FFI_OK) {
         luaL_errorL(L, "ffi_prep_cif fail: %s", ffiStatusToString(ffi_status).c_str());
+    }
 
     return ct;
 }
@@ -98,9 +100,9 @@ static int lua_namecall_CFuncType(lua_State* L)
     CType* ct = checkCFuncType(L, 1);
     
     const char* method = lua_namecallatom(L, nullptr);
-    if (method == nullptr)
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CFuncType with invalid method");
+    }
 
     return handleCTypeNamecall(L, ct);
 }
