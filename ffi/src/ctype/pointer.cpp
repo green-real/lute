@@ -98,6 +98,9 @@ void initCPointerType(lua_State* L)
     lua_pushcfunction(L, lua_namecall_CPointerType, "kCPointerType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
+    lua_pushstring(L, kCPointerType);
+    lua_setfield(L, -2, "__type");
+
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);
 

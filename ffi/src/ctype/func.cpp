@@ -139,6 +139,9 @@ void initCFuncType(lua_State* L)
     lua_pushcfunction(L, lua_namecall_CFuncType, "kCFuncType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
+    lua_pushstring(L, kCFuncType);
+    lua_setfield(L, -2, "__type");
+
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);
 

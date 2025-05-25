@@ -99,6 +99,9 @@ void initCArrayType(lua_State* L)
     lua_pushcfunction(L, lua_namecall_CArrayType, "kCArrayType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
+    lua_pushstring(L, kCArrayType);
+    lua_setfield(L, -2, "__type");
+
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);
 

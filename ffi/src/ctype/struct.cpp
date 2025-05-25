@@ -133,12 +133,11 @@ static int lua_tostring_CStructType(lua_State* L)
 static int lua_namecall_CStructType(lua_State* L)
 {
     CType* ct = checkCStructType(L, 1);
-    
+
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CStructType with invalid method");
     }
-        
 
     return handleCTypeNamecall(L, ct);
 }
@@ -173,6 +172,9 @@ void initCStructType(lua_State* L)
 
     lua_pushcfunction(L, lua_namecall_CStructType, "kCStructType.__namecall");
     lua_setfield(L, -2, "__namecall");
+
+    lua_pushstring(L, kCStructType);
+    lua_setfield(L, -2, "__type");
 
     lua_setreadonly(L, -1, true);
     lua_pop(L, 1);
