@@ -54,6 +54,8 @@ int lua_cfunc(lua_State* L)
     if (ret->kind == CTypeKind::FUNC)
         luaL_argerror(L, 2, "return type should not be a function type");
 
+    const char* symbol = luaL_optstring(L, 3, nullptr);
+
     // now that we validated the arguments, we can safely retain them and make the CFuncType releasectype 
     retainCType(L, 2);
     for (std::size_t i = 0; i < nargs; ++i) {
@@ -61,7 +63,7 @@ int lua_cfunc(lua_State* L)
         lua_pop(L, 1);
     }
     
-    newCFuncType(L, ret, std::move(args), FFI_DEFAULT_ABI, true);
+    newCFuncType(L, ret, std::move(args), FFI_DEFAULT_ABI, true, symbol);
 
     return 1;
 }
@@ -164,36 +166,66 @@ int lua_csizeof(lua_State* L)
 int lua_cload(lua_State* L)
 {
     FFIDLHandle* handle = checkFFIDLHandle(L, 1);
-    luaL_checktype(L, 2, LUA_TTABLE); // symbol table
 
-    lua_newtable(L); // create a new table for the loaded symbols
+    if (lua_istable(L, 2)) {
+        lua_newtable(L); // create a new table for the loaded symbols
 
-    lua_pushnil(L); // start iterating over the symbol table
-    while (lua_next(L, 2) != 0) {
-        const char* symbol = lua_tostring(L, -2);
-        if (symbol == nullptr) {
-            luaL_error(L, "symbol keys must be strings");
+        lua_pushnil(L); // start iterating over the symbol table
+        while (lua_next(L, 2) != 0) {
+            const char* field_name = lua_tostring(L, -2);
+            if (field_name == nullptr) {
+                luaL_argerror(L, 2, "index must be a string");
+            }
+
+            CType* ct = checkCType(L, -1);
+            if (ct->kind != CTypeKind::FUNC) {
+                luaL_argerror(L, 2, "value should be a CFuncType");
+            }
+
+            const char* symbol = field_name;
+            if (!ct->func->symbol.empty()) {
+                symbol = ct->func->symbol.c_str(); // use the symbol from the CFuncType if it exists
+            }
+
+            void* addr = getSymbol(handle->handle, symbol);
+            if (addr == nullptr) {
+                lua_pushnil(L);
+            } else {
+                retainCType(L, -1);
+                retainFFIDLHandle(L, 1);
+                newCFuncData(L, ct, addr, true, handle);
+            }
+
+            lua_setfield(L, -4, field_name);
+            lua_pop(L, 1); // pop the value, keep the key for the next iteration
         }
 
-        CType* ct = checkCType(L, -1);
+        return 1;
+    } else if (lua_isuserdata(L, 2)) {
+        // if the second argument is a CFuncType, we can load the symbol directly
+        CType* ct = checkCType(L, 2);
         if (ct->kind != CTypeKind::FUNC) {
-            luaL_error(L, "CType should be a function type");
+            luaL_argerror(L, 2, "value should be a CFuncType");
+        }
+
+        const char* symbol = ct->func->symbol.c_str();
+        if (symbol == nullptr || *symbol == '\0') {
+            luaL_argerror(L, 2, "CFuncType does not have a symbol");
         }
 
         void* addr = getSymbol(handle->handle, symbol);
         if (addr == nullptr) {
             lua_pushnil(L);
         } else {
-            retainCType(L, -1);
+            retainCType(L, 2);
             retainFFIDLHandle(L, 1);
             newCFuncData(L, ct, addr, true, handle);
         }
 
-        lua_setfield(L, -4, symbol); // set the symbol in the new table
-        lua_pop(L, 1); // pop the value, keep the key for the next iteration
+        return 1;
     }
 
-    return 1;
+    luaL_typeerror(L, 2, "expected a table or CFuncType");
 }
 
 int lua_ccast(lua_State* L)
