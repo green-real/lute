@@ -1,5 +1,6 @@
 #include "lute/ffi.h"
 #include "lute/ffi/cdata.h"
+#include "lute/ffi/dlib.h"
 #include "lute/ffi/utils.h"
 #include "lute/userdatas.h"
 
@@ -11,14 +12,17 @@
 namespace ffi
 {
 
-CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, CData* dependent)
+CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, FFIDLHandle* dlib)
 {
-    CData* cd = newCData(L, type, data, releasectype, false, dependent);
+    api_check(dlib == nullptr || dlib->selfref != LUA_NOREF); // dlib must be a valid FFIDLHandle which was retained before this call
+
+    CData* cd = newCData(L, type, data, releasectype, false, nullptr);
     cd->kind = CDataKind::FUNC;
     cd->funcdata = new CFuncData;
     cd->funcdata->args = static_cast<void**>(malloc(sizeof(void*) * type->func->args.size()));
     cd->funcdata->argstorage = static_cast<void**>(calloc(type->func->args.size(), sizeof(void*)));
     cd->funcdata->retcd = nullptr;
+    cd->funcdata->dlib = dlib;
 
     return cd;
 }
@@ -148,6 +152,11 @@ void lua_dtor_CFuncData(lua_State* L, void* ud)
         if (ct->funcdata->argstorage[i] != nullptr) {
             free(ct->funcdata->argstorage[i]);
         }
+    }
+    free(ct->funcdata->argstorage);
+
+    if (ct->funcdata->dlib) {
+        releaseFFIDLHandle(L, ct->funcdata->dlib);
     }
 
     delete ct->funcdata;

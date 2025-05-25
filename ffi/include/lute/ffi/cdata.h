@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lute/ffi/ctype.h"
+#include "lute/ffi/dlib.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -55,6 +56,7 @@ struct CFuncData
     void** args; // preallocated argument values
     void** argstorage; // storage for arguments, used to avoid reallocating memory for each call if not using CData as argument
     CData* retcd; // if not null, this is the CData that will be returned as the result of the function call
+    FFIDLHandle* dlib; // if not null, this is the FFIDLHandle that this CFuncData is associated with, which will be released when the CFuncData is garbage collected
 };
 
 struct CPointerData
@@ -64,7 +66,7 @@ struct CPointerData
 };
 
 CData* newCData(lua_State* L, CType* type, void* data, bool releasectype, bool managed, CData* dependent = nullptr);
-CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, CData* dependent = nullptr);
+CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, FFIDLHandle* dlib = nullptr);
 CData* newCPointerData(lua_State* L, CType* type, void* data, bool releasectype, bool managed, bool innermanaged, CData* dependent = nullptr);
 
 CData* toCData(lua_State* L, int idx);

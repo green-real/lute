@@ -1,6 +1,7 @@
 #include "lute/ffi.h"
 #include "lute/ffi/ctype.h"
 #include "lute/ffi/cdata.h"
+#include "lute/ffi/dlib.h"
 #include "lute/ffi/utils.h"
 
 #include "lute/runtime.h"
@@ -115,15 +116,15 @@ int lua_cnew(lua_State* L)
 {
     CType* ct = checkCType(L, 1);
     if (ct->kind == CTypeKind::FUNC) {
-        luaL_argerror(L, 1, "CType should not be a function type");
+        luaL_argerror(L, 1, "CType cannot be a function type");
     } else if (ct->kind == CTypeKind::VOID) {
-        luaL_argerror(L, 1, "CType should not be void");
+        luaL_argerror(L, 1, "CType cannot be void");
     }
 
     const ffi_type* ft = getFFITypeOfCType(ct);
     std::size_t size = ft->size;
     if (size == 0) {
-        luaL_argerror(L, 1, "CType should not be a zero-sized type");
+        luaL_argerror(L, 1, "CType cannot be a zero-sized type");
     }
 
     retainCType(L, 1);
@@ -136,9 +137,6 @@ int lua_cnew(lua_State* L)
     }
 
     switch (ct->kind) {
-        case CTypeKind::FUNC:
-            newCFuncData(L, ct, data, true);
-            break;
         case CTypeKind::POINTER:
             newCPointerData(L, ct, data, true, true, false, nullptr);
             break;
@@ -187,7 +185,8 @@ int lua_cload(lua_State* L)
             lua_pushnil(L);
         } else {
             retainCType(L, -1);
-            newCFuncData(L, ct, addr, true);
+            retainFFIDLHandle(L, 1);
+            newCFuncData(L, ct, addr, true, handle);
         }
 
         lua_setfield(L, -4, symbol); // set the symbol in the new table
@@ -248,66 +247,6 @@ int lua_ccast(lua_State* L)
     return 1;
 }
 
-int add(int x, int y) { printf("%d + %d", x, y); return x + y; }
-int lua_getaddfn(lua_State* L)
-{
-    CType* ct = checkCFuncType(L, 1);
-    retainCType(L, 1);
-
-    newCFuncData(L, ct, reinterpret_cast<void*>(add), true);
-
-    return 1;
-}
-
-int lua_newint(lua_State* L)
-{
-    CType* ct = checkCType(L, 1);
-    if (ct->kind != CTypeKind::INT) {
-        luaL_argerror(L, 1, "CType must be of type int");
-    }
-
-    int value = luaL_checkinteger(L, 2);
-    
-    retainCType(L, 1);
-    void* data = malloc(sizeof(int));
-    *static_cast<int*>(data) = value;
-
-    newCData(L, ct, data, true, true);
-
-    return 1;
-}
-
-int lua_toint(lua_State* L)
-{
-    CData* cd = checkCData(L, 1);
-    if (cd->type->kind != CTypeKind::INT) {
-        luaL_argerror(L, 1, "CData must be of type INT");
-    }
-
-    lua_pushinteger(L, *static_cast<int*>(cd->data));
-
-    return 1;
-}
-
-struct vec3 {
-    float x;
-    float y;
-    float z;
-};
-
-int lua_readvec3(lua_State* L)
-{
-    CData* cd = checkCData(L, 1);
-    
-    vec3* vec = static_cast<vec3*>(cd->data);
-
-    lua_pushnumber(L, vec->x);
-    lua_pushnumber(L, vec->y);
-    lua_pushnumber(L, vec->z);
-
-    return 3;
-}
-
 int openCInterface(lua_State* L)
 {
     initCArrayType(L);
@@ -321,6 +260,8 @@ int openCInterface(lua_State* L)
     initCFuncData(L);
     initCPointerData(L);
     initCStructData(L);
+
+    initFFIDLHandle(L);
 
     lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + static_cast<std::size_t>(CBaseTypeKind::__COUNT__));
     luaL_register(L, nullptr, clib);
@@ -372,28 +313,6 @@ int openCInterface(lua_State* L)
 #undef ADD_TYPE
 #undef ADD_TYPE_T
 #pragma endregion
-
-    // DEBUG
-    lua_pushcfunction(L, lua_getaddfn, "getaddfn");
-    lua_setfield(L, -2, "getaddfn");
-    lua_pushcfunction(L, lua_toint, "toint");
-    lua_setfield(L, -2, "toint");
-    lua_pushcfunction(L, lua_newint, "newint");
-    lua_setfield(L, -2, "newint");
-
-    lua_pushcfunction(L, lua_readvec3, "readvec3");
-    lua_setfield(L, -2, "readvec3");
-
-    lua_pushcfunction(L, lua_dlopen, "dlopen");
-
-    #ifdef _WIN32
-    lua_pushstring(L, "msvcrt.dll");
-    #else
-    lua_pushstring(L, "libc.so.6");
-    #endif
-    
-    lua_call(L, 1, 1); // call dlopen with the libc name
-    lua_setfield(L, -2, "libc");
 
     lua_setreadonly(L, -1, 1);
 

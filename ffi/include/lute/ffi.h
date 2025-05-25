@@ -18,44 +18,20 @@ namespace ffi
 
 int lua_dlopen(lua_State* L);
 
-int lua_dlclose(lua_State* L);
-
 static const char kCInterfaceProperty[] = "c";
+static const char kLibCDLProperty[] = "libc";
 
 static const luaL_Reg lib[] = {
     {"dlopen", lua_dlopen},
-    {"dlclose", lua_dlclose},
-    
     {nullptr, nullptr},
 };
 
 static const std::string properties[] = {
-    kCInterfaceProperty
+    kCInterfaceProperty,
+    kLibCDLProperty
 };
 
 }  // namespace ffi
-
-namespace ffi
-{
-
-struct FFIDLHandle
-{
-    void* handle;
-    const char* path;
-
-    std::unordered_map<std::string, void*> symbols;
-};
-
-FFIDLHandle* checkFFIDLHandle(lua_State* L, int idx);
-
-
-void* openLibrary(const char* path, std::string& err);
-
-int closeLibrary(void* lib);
-
-void* getSymbol(void* lib, const std::string& symbol_name);
-
-}
 
 namespace ffi
 {
