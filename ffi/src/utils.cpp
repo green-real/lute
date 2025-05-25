@@ -45,12 +45,8 @@ l_noret luaL_argerrorf(lua_State* L, int narg, const char* fmt, ...) {
 #define LIB_SUFFIX ".so"
 #endif
 
-std::string resolveDLPath(const std::string& path)
+std::vector<std::string> getPossibleDLPaths(const std::string& path)
 {
-    if (fs::exists(path)) {
-        return fs::absolute(path).string();
-    }
-
     // extract filename and directory
     fs::path p(path);
     std::string filename = p.filename().string();
@@ -60,22 +56,25 @@ std::string resolveDLPath(const std::string& path)
     }
 
     // generate possibly library names
-    std::vector<std::string> possibleNames = {
-        LIB_PREFIX + filename,
-        ALT_LIB_PREFIX + filename,
-        LIB_PREFIX + filename + LIB_SUFFIX,
-        ALT_LIB_PREFIX + filename + LIB_SUFFIX,
-        filename + LIB_SUFFIX,
-        filename
+    // std::vector<std::string> possiblePaths = {
+    //     LIB_PREFIX + filename,
+    //     ALT_LIB_PREFIX + filename,
+    //     LIB_PREFIX + filename + LIB_SUFFIX,
+    //     ALT_LIB_PREFIX + filename + LIB_SUFFIX,
+    //     filename + LIB_SUFFIX,
+    //     filename
+    // };
+
+    // new approach which orders the paths by likelihood
+    std::vector<std::string> possiblePaths = {
+        dir + LIB_PREFIX + filename + LIB_SUFFIX,
+        dir + ALT_LIB_PREFIX + filename + LIB_SUFFIX,
+        dir + filename + LIB_SUFFIX,
+        dir + LIB_PREFIX + filename,
+        dir + ALT_LIB_PREFIX + filename,
+        dir + filename
     };
 
-    // attempt to find the library in the directory
-    for (const auto& name : possibleNames) {
-        std::string fullPath = dir + name;
-        if (fs::exists(fullPath)) {
-            return fs::absolute(fullPath).string();
-        }
-    }
 
-    return path; // return the original path if no library was found
+    return possiblePaths;
 }

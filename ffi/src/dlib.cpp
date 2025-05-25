@@ -8,6 +8,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -20,9 +21,18 @@ namespace ffi
 
 FFIDLHandle* newFFIDLHandle(lua_State* L, const char* path)
 {
-    std::string resolved = resolveDLPath(path);
+    std::vector<std::string> possiblePaths = getPossibleDLPaths(path);
     std::string err;
-    void* lib = openLibrary(resolved.c_str(), err);
+    
+    std::string resolved;
+    void* lib = nullptr;
+    for (const std::string& path : possiblePaths) {
+        lib = openLibrary(path.c_str(), err);
+        if (lib) {
+            resolved = path;
+            break;
+        }
+    }
     if (!lib) {
         luaL_error(L, "failed to open library '%s': %s", path, err.c_str());
     }
@@ -34,7 +44,7 @@ FFIDLHandle* newFFIDLHandle(lua_State* L, const char* path)
 
     lua_rawgetfield(L, LUA_REGISTRYINDEX, kFFIWeakRegistryKey);
     lua_pushlightuserdata(L, dl);
-    lua_pushstring(L, resolved.c_str());
+    lua_pushstring(L, path);
     lua_rawset(L, -3);
     lua_pop(L, 1); // pop the weak registry table
 
