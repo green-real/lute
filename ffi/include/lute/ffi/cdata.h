@@ -62,7 +62,6 @@ struct CFuncData
 struct CPointerData
 {
     bool innermanaged; // if true, CPointerData will free *ptr when garbage collected
-    CData* refto; // if this is not null, CPointerData will call releaseCData on refto when garbage collected
 };
 
 CData* newCData(lua_State* L, CType* type, void* data, bool releasectype, bool managed, CData* dependent = nullptr);
