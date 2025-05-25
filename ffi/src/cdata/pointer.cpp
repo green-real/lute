@@ -91,13 +91,13 @@ void initCPointerData(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_index_CPointerData, (std::string(kCPointerData) + "__index").c_str());
+    lua_pushcfunction(L, lua_index_CPointerData, "kCPointerData.__index");
     lua_setfield(L, -2, "__index");
 
-    lua_pushcfunction(L, lua_tostring_CPointerData, (std::string(kCPointerData) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CPointerData, "kCPointerData.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CPointerData, (std::string(kCPointerData) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CPointerData, "kCPointerData.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);

@@ -164,10 +164,10 @@ void initCStructType(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_tostring_CStructType, (std::string(kCStructType) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CStructType, "kCStructType.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CStructType, (std::string(kCStructType) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CStructType, "kCStructType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);

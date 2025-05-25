@@ -98,13 +98,13 @@ void initCArrayData(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_index_CArrayData, (std::string(kCArrayData) + "__index").c_str());
+    lua_pushcfunction(L, lua_index_CArrayData, "CArrayData.__index");
     lua_setfield(L, -2, "__index");
 
-    lua_pushcfunction(L, lua_tostring_CArrayData, (std::string(kCArrayData) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CArrayData, "kCArrayData.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CArrayData, (std::string(kCArrayData) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CArrayData, "kCArrayData.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);

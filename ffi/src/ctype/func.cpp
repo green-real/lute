@@ -106,6 +106,7 @@ static int lua_namecall_CFuncType(lua_State* L)
 void lua_dtor_CFuncType(lua_State* L, void* ud)
 {
     CType* ct = static_cast<CType*>(ud);
+
     ct->func->releaseDependencies(L);
     delete ct->func;
 }
@@ -127,10 +128,10 @@ void initCFuncType(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_tostring_CFuncType, (std::string(kCFuncType) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CFuncType, "kCFuncType.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CFuncType, (std::string(kCFuncType) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CFuncType, "kCFuncType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);

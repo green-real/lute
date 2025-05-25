@@ -67,6 +67,7 @@ static int lua_namecall_CPointerType(lua_State* L)
 void lua_dtor_CPointerType(lua_State* L, void* ud)
 {
     CType* ct = static_cast<CType*>(ud);
+
     ct->ptr->releaseDependencies(L);
     delete ct->ptr;
 }
@@ -88,10 +89,10 @@ void initCPointerType(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_tostring_CPointerType, (std::string(kCPointerType) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CPointerType, "kCPointerType.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CPointerType, (std::string(kCPointerType) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CPointerType, "kCPointerType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);

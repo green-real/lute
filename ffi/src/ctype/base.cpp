@@ -66,10 +66,10 @@ void initCBaseType(lua_State* L)
     lua_pushstring(L, "The metatable is locked");
     lua_setfield(L, -2, "__metatable");
 
-    lua_pushcfunction(L, lua_tostring_CBaseType, (std::string(kCBaseType) + "__tostring").c_str());
+    lua_pushcfunction(L, lua_tostring_CBaseType, "kCBaseType.__tostring");
     lua_setfield(L, -2, "__tostring");
 
-    lua_pushcfunction(L, lua_namecall_CBaseType, (std::string(kCBaseType) + "__namecall").c_str());
+    lua_pushcfunction(L, lua_namecall_CBaseType, "kCBaseType.__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);
