@@ -66,9 +66,11 @@ static int lua_tostring_CArrayType(lua_State* L)
 static int lua_namecall_CArrayType(lua_State* L)
 {
     CType* ct = checkCArrayType(L, 1);
+    
     const char* method = lua_namecallatom(L, nullptr);
-    if (method == nullptr)
+    if (method == nullptr) {
         luaL_error(L, "attempt to namecall CArrayType with invalid method");
+    } 
     
     return handleCTypeNamecall(L, ct);
 }

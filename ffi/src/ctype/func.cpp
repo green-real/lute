@@ -96,8 +96,10 @@ static int lua_tostring_CFuncType(lua_State* L)
 static int lua_namecall_CFuncType(lua_State* L)
 {
     CType* ct = checkCFuncType(L, 1);
+    
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr)
+    if (method == nullptr) {
         luaL_error(L, "attempt to namecall CFuncType with invalid method");
 
     return handleCTypeNamecall(L, ct);

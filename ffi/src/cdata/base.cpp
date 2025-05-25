@@ -167,6 +167,12 @@ int pushLuaNumberFromCData(lua_State* L, void* data, CType* ct)
 static int lua_namecall_CBaseData(lua_State* L)
 {
     CData* cd = checkCBaseData(L, 1);
+    
+    const char* method = lua_namecallatom(L, nullptr);
+    if (method == nullptr) {
+        luaL_error(L, "attempt to namecall CBaseData with invalid method");
+    }
+
     return handleCDataNamecall(L, cd);
 }
 

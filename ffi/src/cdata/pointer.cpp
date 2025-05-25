@@ -65,6 +65,12 @@ static int lua_index_CPointerData(lua_State* L)
 static int lua_namecall_CPointerData(lua_State* L)
 {
     CData* cd = checkCPointerData(L, 1);
+    
+    const char* method = lua_namecallatom(L, nullptr);
+    if (method == nullptr) {
+        luaL_error(L, "attempt to namecall CPointerData with invalid method");
+    }
+
     return handleCDataNamecall(L, cd);
 }
 

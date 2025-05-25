@@ -78,6 +78,12 @@ static int lua_index_CStructData(lua_State* L)
 static int lua_namecall_CStructData(lua_State* L)
 {
     CData* cd = checkCStructData(L, 1);
+    
+    const char* method = lua_namecallatom(L, nullptr);
+    if (method == nullptr) {
+        luaL_error(L, "attempt to namecall CStructData with invalid method");
+    }
+
     return handleCDataNamecall(L, cd);
 }
 

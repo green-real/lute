@@ -293,9 +293,13 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
 
 int handleCDataNamecall(lua_State* L, CData* cd)
 {
-    CType* ct = cd->type;
+    api_check(cd != nullptr);
 
     const char* method = lua_namecallatom(L, nullptr);
+    api_check(method != nullptr);
+
+    CType* ct = cd->type;
+
     if (strcmp(method, "write") == 0) {
         if (lua_gettop(L) < 2) {
             luaL_argerror(L, 2, "expected value to write to CData");

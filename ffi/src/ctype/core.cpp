@@ -60,7 +60,10 @@ CType* checkCType(lua_State* L, int idx)
 
 int handleCTypeNamecall(lua_State* L, CType* ct)
 {
+    api_check(ct != nullptr);
+
     const char* method = lua_namecallatom(L, nullptr);
+    api_check(method != nullptr);
 
     if (strcmp(method, "ptr") == 0) {
         retainCType(L, 1);

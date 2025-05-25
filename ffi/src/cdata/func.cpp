@@ -112,6 +112,10 @@ static int lua_namecall_CFuncData(lua_State* L)
     CData* cd = checkCFuncData(L, 1);
 
     const char* method = lua_namecallatom(L, nullptr);
+    if (method == nullptr) {
+        luaL_error(L, "attempt to namecall CFuncData with invalid method");
+    }
+    
     if (strcmp(method, "setret") == 0) {
         CData* ret = checkCData(L, 2);
         CType* rettype = ret->type;

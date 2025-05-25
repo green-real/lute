@@ -42,9 +42,11 @@ static int lua_tostring_CBaseType(lua_State* L)
 static int lua_namecall_CBaseType(lua_State* L)
 {
     CType* ct = checkCBaseType(L, 1);
+    
     const char* method = lua_namecallatom(L, nullptr);
-    if (method == nullptr)
+    if (method == nullptr) {
         luaL_error(L, "attempt to namecall CBaseType with invalid method");
+    }
 
     return handleCTypeNamecall(L, ct);
 }

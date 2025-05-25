@@ -73,6 +73,12 @@ static int lua_index_CArrayData(lua_State* L)
 static int lua_namecall_CArrayData(lua_State* L)
 {
     CData* cd = checkCArrayData(L, 1);
+    
+    const char* method = lua_namecallatom(L, nullptr);
+    if (method == nullptr) {
+        luaL_error(L, "attempt to namecall CArrayData with invalid method");
+    }
+
     return handleCDataNamecall(L, cd);
 }
 
