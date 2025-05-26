@@ -55,17 +55,6 @@ std::vector<std::string> getPossibleDLPaths(const std::string& path)
         dir += fs::path::preferred_separator;
     }
 
-    // generate possibly library names
-    // std::vector<std::string> possiblePaths = {
-    //     LIB_PREFIX + filename,
-    //     ALT_LIB_PREFIX + filename,
-    //     LIB_PREFIX + filename + LIB_SUFFIX,
-    //     ALT_LIB_PREFIX + filename + LIB_SUFFIX,
-    //     filename + LIB_SUFFIX,
-    //     filename
-    // };
-
-    // new approach which orders the paths by likelihood
     std::vector<std::string> possiblePaths = {
         dir + LIB_PREFIX + filename + LIB_SUFFIX,
         dir + ALT_LIB_PREFIX + filename + LIB_SUFFIX,
@@ -74,7 +63,6 @@ std::vector<std::string> getPossibleDLPaths(const std::string& path)
         dir + ALT_LIB_PREFIX + filename,
         dir + filename
     };
-
 
     return possiblePaths;
 }
