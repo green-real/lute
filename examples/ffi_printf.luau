@@ -19,7 +19,7 @@ local libc = c.load(ffi.libc, {
 local bufptr = buffer.create(8)
 buffer.writeu32(bufptr, 0, 0x89ABCDEF)
 buffer.writeu32(bufptr, 4, 0x01234567)
-local ptr: any = c.new(voidptr, bufptr)
+local ptr = c.new(voidptr, bufptr)
 
 libc.printf("Test\n")
 libc.printf_str("%s\n", "Test")
@@ -36,7 +36,7 @@ local function printf(fmt: string, ...)
     local key = table.concat(arg_types, "|")
     if printfcache[key] then
         printfcache[key](fmt, ...)
-        return printf_ret:read()
+        return
     end
 
     local arg_ctypes = table.create(#args + 1)
@@ -61,8 +61,7 @@ local function printf(fmt: string, ...)
     printfcache[key] = printf
 
     printf(fmt, ...)
-
-    return printf_ret:read()
 end
 
-print(printf("string: %s, number: %f, pointer: %p\n", "Hello", 123.52, ptr))
+printf("string: %s, number: %f, pointer: %p\n", "Hello", 123.52, ptr)
+print("printf resulting length: " .. printf_ret:read())
