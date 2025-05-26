@@ -71,6 +71,30 @@ static int lua_namecall_CPointerData(lua_State* L)
         luaL_error(L, "attempt to namecall CPointerData with invalid method");
     }
 
+    if (strcmp(method, "deref") == 0) {
+        int index = luaL_optinteger(L, 2, 0);
+        if (index < 0) {
+            luaL_argerror(L, 2, "index must be a non-negative integer");
+        }
+
+        CType* innerct = cd->type->ptr->innertype;
+        if (innerct->kind == CTypeKind::VOID) {
+            luaL_error(L, "cannot dereference a void pointer");
+        }
+
+        void* ptr = *static_cast<void**>(cd->data);
+        std::size_t elemsize = getFFITypeOfCType(innerct)->size;
+        void* elemdata = static_cast<char*>(ptr) + index * elemsize;
+
+        retainCType(L, innerct);
+        retainCData(L, 1);
+        if (innerct->kind == CTypeKind::POINTER) {
+            newCPointerData(L, innerct, elemdata, true, false, false, cd);
+        } else {
+            newCData(L, innerct, elemdata, true, false, cd);
+        }
+    }
+
     return handleCDataNamecall(L, cd);
 }
 
