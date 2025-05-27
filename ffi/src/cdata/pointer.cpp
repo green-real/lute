@@ -129,9 +129,18 @@ static int lua_tostring_CPointerData(lua_State* L)
 
 void lua_dtor_CPointerData(lua_State* L, void* ud)
 {
-    CData* ct = static_cast<CData*>(ud);
-    delete ct->ptrdata; // TODO: handle innermanaged
-    handleCDataDtor(L, ct);
+    CData* cd = static_cast<CData*>(ud);
+    api_check(cd->kind == CDataKind::POINTER);
+
+    if (cd->ptrdata->innermanaged) {
+        void* ptr = *static_cast<void**>(cd->data);
+        if (ptr != nullptr) {
+            free(ptr); // free the inner pointer if it is managed
+        }
+    }
+
+    delete cd->ptrdata; // TODO: handle innermanaged
+    handleCDataDtor(L, cd);
 }
 
 void initCPointerData(lua_State* L)
