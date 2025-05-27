@@ -365,17 +365,17 @@ int openCInterface(lua_State* L)
     ADD_TYPE_T("llong", CBaseTypeKind::LONGLONG, long long, true);
     ADD_TYPE_T("ullong", CBaseTypeKind::ULONGLONG, unsigned long long, false);
 
-    ADD_TYPE_T("int8_t", CBaseTypeKind::INT8_T, int8_t, true);
-    ADD_TYPE_T("int16_t", CBaseTypeKind::INT16_T, int16_t, true);
-    ADD_TYPE_T("int32_t", CBaseTypeKind::INT32_T, int32_t, true);
-    ADD_TYPE_T("int64_t", CBaseTypeKind::INT64_T, int64_t, true);
-    ADD_TYPE_T("uint8_t", CBaseTypeKind::UINT8_T, uint8_t, false);
-    ADD_TYPE_T("uint16_t", CBaseTypeKind::UINT16_T, uint16_t, false);
-    ADD_TYPE_T("uint32_t", CBaseTypeKind::UINT32_T, uint32_t, false);
-    ADD_TYPE_T("uint64_t", CBaseTypeKind::UINT64_T, uint64_t, false);
+    ADD_TYPE_T("int8_t", CBaseTypeKind::INT8_T, std::int8_t, true);
+    ADD_TYPE_T("int16_t", CBaseTypeKind::INT16_T, std::int16_t, true);
+    ADD_TYPE_T("int32_t", CBaseTypeKind::INT32_T, std::int32_t, true);
+    ADD_TYPE_T("int64_t", CBaseTypeKind::INT64_T, std::int64_t, true);
+    ADD_TYPE_T("uint8_t", CBaseTypeKind::UINT8_T, std::uint8_t, false);
+    ADD_TYPE_T("uint16_t", CBaseTypeKind::UINT16_T, std::uint16_t, false);
+    ADD_TYPE_T("uint32_t", CBaseTypeKind::UINT32_T, std::uint32_t, false);
+    ADD_TYPE_T("uint64_t", CBaseTypeKind::UINT64_T, std::uint64_t, false);
 
-    ADD_TYPE_T("size_t", CBaseTypeKind::SIZE_T, size_t, false);
-    ADD_TYPE_T("ssize_t", CBaseTypeKind::SSIZE_T, ssize_t, true);
+    ADD_TYPE_T("size_t", CBaseTypeKind::SIZE_T, std::size_t, false);
+    ADD_TYPE_T("ssize_t", CBaseTypeKind::SSIZE_T, std::make_signed_t<std::size_t>, true);
 
     ADD_TYPE("float", CBaseTypeKind::FLOAT, ffi_type_float);
     ADD_TYPE("double", CBaseTypeKind::DOUBLE, ffi_type_double);
