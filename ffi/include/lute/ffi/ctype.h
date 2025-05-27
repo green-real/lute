@@ -235,6 +235,7 @@ void releaseCType(lua_State* L, CType* ct);
 bool pushCType(lua_State* L, CType* ctype);
 
 const ffi_type* getCIntFFIType(size_t size, bool isSigned);
+void registerCBaseTypes(lua_State* L);
 
 std::string toStringCType(CType* ct);
 std::string getNameCType(CType* ct);
