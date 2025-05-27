@@ -14,13 +14,21 @@ namespace ffi
 
 CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, FFIDLHandle* dlib)
 {
+    api_check(type->kind == CTypeKind::FUNC); // type must be a function type
     api_check(dlib == nullptr || dlib->selfref != LUA_NOREF); // dlib must be a valid FFIDLHandle which was retained before this call
+
+    std::size_t nargs = type->func->args.size();
 
     CData* cd = newCData(L, type, data, releasectype, false, nullptr);
     cd->kind = CDataKind::FUNC;
     cd->funcdata = new CFuncData;
-    cd->funcdata->args = static_cast<void**>(malloc(sizeof(void*) * type->func->args.size()));
-    cd->funcdata->argstorage = static_cast<void**>(calloc(type->func->args.size(), sizeof(void*)));
+    cd->funcdata->nargs = nargs;
+    cd->funcdata->args = static_cast<void**>(malloc(sizeof(void*) * nargs));
+    cd->funcdata->argstorage = static_cast<void**>(malloc(sizeof(void*) * nargs));
+    for (size_t i = 0; i < nargs; ++i) {
+        cd->funcdata->args[i] = nullptr;
+        cd->funcdata->argstorage[i] = nullptr;
+    }
     cd->funcdata->retcd = nullptr;
     cd->funcdata->dlib = dlib;
 
@@ -65,7 +73,7 @@ static int lua_call_CFuncData(lua_State* L)
                 args[i] = arg->data;
             }
         } else {
-            if (lua_isnoneornil(L, i + 2)) {
+            if (lua_isnone(L, i + 2)) {
                 luaL_argerrorf(L, i + 2, "expected CData or value convertible to CData at argument %d", (int)i + 2);
             }
 
@@ -100,7 +108,13 @@ static int lua_call_CFuncData(lua_State* L)
         ret_data = malloc(getFFITypeOfCType(ct->func->ret)->size);
 
         retainCType(L, ret_type);
-        newCData(L, ct->func->ret, ret_data, true, true);
+
+        if (ret_type->kind == CTypeKind::POINTER) {
+            newCPointerData(L, ret_type, ret_data, true, true, false);
+        } else {
+            newCData(L, ct->func->ret, ret_data, true, true);
+        }
+        
     }
     
     ffi_call(const_cast<ffi_cif*>(&ct->func->cif), FFI_FN(cd->data), ret_data, cd->funcdata->args);
@@ -161,24 +175,27 @@ static int lua_tostring_CFuncData(lua_State* L)
 
 void lua_dtor_CFuncData(lua_State* L, void* ud)
 {
-    CData* ct = static_cast<CData*>(ud);
-    if (ct->funcdata->retcd) {
-        releaseCData(L, ct->funcdata->retcd);
+
+    CData* cd = static_cast<CData*>(ud);
+    api_check(cd->kind == CDataKind::FUNC);
+    // api_check(cd->selfref == LUA_NOREF);
+
+    if (cd->funcdata->retcd) {
+        releaseCData(L, cd->funcdata->retcd);
     }
     
-    free(ct->funcdata->args);
-    for (size_t i = 0; i < ct->type->func->args.size(); ++i) {
-        if (ct->funcdata->argstorage[i] == nullptr) continue;
-        free(ct->funcdata->argstorage[i]);
+    free(cd->funcdata->args);
+    for (size_t i = 0; i < cd->funcdata->nargs; ++i) {
+        if (cd->funcdata->argstorage[i] == nullptr) continue;
+        free(cd->funcdata->argstorage[i]);
     }
-    free(ct->funcdata->argstorage);
+    free(cd->funcdata->argstorage);
 
-    if (ct->funcdata->dlib) {
-        releaseFFIDLHandle(L, ct->funcdata->dlib);
+    if (cd->funcdata->dlib) {
+        releaseFFIDLHandle(L, cd->funcdata->dlib);
     }
-
-    delete ct->funcdata;
-    handleCDataDtor(L, ct);
+    delete cd->funcdata;
+    handleCDataDtor(L, cd);
 }
 
 void initCFuncData(lua_State* L)
