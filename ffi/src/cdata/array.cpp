@@ -69,6 +69,8 @@ static int lua_index_CArrayData(lua_State* L)
         } else {
             newCData(L, ct->array->elemtype, elemdata, true, false, cd);
         }
+
+        return 1;
     }
 
     return handleCDataIndex(L, cd);
@@ -77,10 +79,28 @@ static int lua_index_CArrayData(lua_State* L)
 static int lua_namecall_CArrayData(lua_State* L)
 {
     CData* cd = checkCArrayData(L, 1);
+    CType* ct = cd->type;
 
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CArrayData with invalid method");
+    }
+
+    if (strcmp(method, "string") == 0) {
+        CType* elemtype = ct->array->elemtype;
+        if (elemtype->kind != CTypeKind::CHAR && elemtype->kind != CTypeKind::UCHAR && elemtype->kind != CTypeKind::SCHAR) {
+            luaL_argerrorf(L, 2, "attempt to convert %s<%s> to string, but element type is not a character type",
+                          getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
+        }
+
+        const char* str = static_cast<const char*>(cd->data);
+        std::size_t len = strlen(str);
+        if (len > ct->array->size) {
+            len = ct->array->size; // ensure we don't read beyond the array size
+        }
+
+        lua_pushlstring(L, str, len);
+        return 1;
     }
 
     return handleCDataNamecall(L, cd);
