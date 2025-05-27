@@ -11,6 +11,16 @@
 
 namespace fs = std::filesystem;
 
+#ifdef _WIN32
+#define LIB_PREFIX ""
+#define ALT_LIB_PREFIX "lib"
+#define LIB_SUFFIX ".dll"
+#else
+#define LIB_PREFIX "lib"
+#define ALT_LIB_PREFIX ""
+#define LIB_SUFFIX ".so"
+#endif
+
 std::string ffiStatusToString(int status)
 {
     switch (status)
@@ -34,16 +44,6 @@ l_noret luaL_argerrorf(lua_State* L, int narg, const char* fmt, ...) {
     luaL_argerrorL(L, narg, lua_pushvfstring(L, fmt, argp));
     va_end(argp);
 }
-
-#ifdef _WIN32
-#define LIB_PREFIX ""
-#define ALT_LIB_PREFIX "lib"
-#define LIB_SUFFIX ".dll"
-#else
-#define LIB_PREFIX "lib"
-#define ALT_LIB_PREFIX ""
-#define LIB_SUFFIX ".so"
-#endif
 
 std::vector<std::string> getPossibleDLPaths(const std::string& path)
 {
