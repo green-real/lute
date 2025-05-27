@@ -98,6 +98,7 @@ int handleCDataNamecall(lua_State* L, CData* cd);
 int handleCDataToString(lua_State* L, CData* cd);
 void handleCDataDtor(lua_State* L, CData* cd);
 
+void initCData(lua_State* L);
 void initCArrayData(lua_State* L);
 void initCBaseData(lua_State* L);
 void initCFuncData(lua_State* L);

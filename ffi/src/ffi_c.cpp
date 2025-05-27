@@ -321,18 +321,8 @@ int lua_cstring(lua_State* L)
 
 int openCInterface(lua_State* L)
 {
-    initCArrayType(L);
-    initCBaseType(L);
-    initCFuncType(L);
-    initCPointerType(L);
-    initCStructType(L);
-
-    initCArrayData(L);
-    initCBaseData(L);
-    initCFuncData(L);
-    initCPointerData(L);
-    initCStructData(L);
-
+    initCType(L);
+    initCData(L);
     initFFIDLHandle(L);
 
     lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + static_cast<size_t>(CBaseTypeKind::__COUNT__));

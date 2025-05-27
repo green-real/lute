@@ -77,6 +77,15 @@ CData* checkCData(lua_State* L, int idx, CDataKind kind)
     return nullptr;
 }
 
+void initCData(lua_State* L)
+{
+    initCArrayData(L);
+    initCBaseData(L);
+    initCFuncData(L);
+    initCPointerData(L);
+    initCStructData(L);
+}
+
 // increments the refcount and retains the CData
 void retainCData(lua_State* L, int idx)
 {

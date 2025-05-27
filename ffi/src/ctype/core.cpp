@@ -59,6 +59,15 @@ CType* checkCType(lua_State* L, int idx)
     return nullptr;
 }
 
+void initCType(lua_State* L)
+{
+    initCArrayType(L);
+    initCBaseType(L);
+    initCFuncType(L);
+    initCPointerType(L);
+    initCStructType(L);
+}
+
 int handleCTypeNamecall(lua_State* L, CType* ct)
 {
     api_check(ct != nullptr);

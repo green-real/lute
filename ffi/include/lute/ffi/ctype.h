@@ -218,6 +218,7 @@ CType* checkCFuncType(lua_State* L, int idx);
 CType* checkCPointerType(lua_State* L, int idx);
 CType* checkCStructType(lua_State* L, int idx);
 
+void initCType(lua_State* L);
 void initCArrayType(lua_State* L);
 void initCBaseType(lua_State* L);
 void initCFuncType(lua_State* L);
