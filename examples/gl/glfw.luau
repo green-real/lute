@@ -5,15 +5,11 @@ local void = c.void
 local char = c.char
 local int = c.int
 local uint = c.uint
-local long = c.long
-local ulong = c.ulong
 local float = c.float
 local double = c.double
 
 local voidptr = void:ptr()
 local charptr = char:ptr()
-
-local nullptr = c.new(voidptr, nil)
 
 -- // opaque types
 local GLFWmonitor = voidptr
