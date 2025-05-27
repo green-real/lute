@@ -52,7 +52,11 @@ std::vector<std::string> getPossibleDLPaths(const std::string& path)
     std::string filename = p.filename().string();
     std::string dir = p.parent_path().string();
     if (!dir.empty()) {
-        dir += fs::path::preferred_separator;
+        dir = fs::absolute(dir).string();
+        
+        if (dir.back() != fs::path::preferred_separator) {
+            dir += fs::path::preferred_separator;
+        }
     }
 
     std::vector<std::string> possiblePaths = {
