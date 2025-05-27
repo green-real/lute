@@ -11,6 +11,8 @@ namespace ffi
 
 CData* newCPointerData(lua_State* L, CType* type, void* data, bool releasectype, bool managed, bool innermanaged, CData* dependent)
 {
+    api_check(type->kind == CTypeKind::POINTER);
+
     CData* cd = newCData(L, type, data, releasectype, managed, dependent);
     cd->kind = CDataKind::POINTER;
     cd->ptrdata = new CPointerData;
@@ -65,6 +67,7 @@ static int lua_index_CPointerData(lua_State* L)
 static int lua_namecall_CPointerData(lua_State* L)
 {
     CData* cd = checkCPointerData(L, 1);
+    CType* ct = cd->type;
     
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
@@ -77,22 +80,42 @@ static int lua_namecall_CPointerData(lua_State* L)
             luaL_argerror(L, 2, "index must be a non-negative integer");
         }
 
-        CType* innerct = cd->type->ptr->innertype;
+        CType* innerct = ct->ptr->innertype;
         if (innerct->kind == CTypeKind::VOID) {
             luaL_error(L, "cannot dereference a void pointer");
         }
 
         void* ptr = *static_cast<void**>(cd->data);
-        std::size_t elemsize = getFFITypeOfCType(innerct)->size;
+        std::size_t elemsize = innerct->kind == CTypeKind::FUNC ? 0 : getFFITypeOfCType(innerct)->size;
         void* elemdata = static_cast<char*>(ptr) + index * elemsize;
 
         retainCType(L, innerct);
         retainCData(L, 1);
         if (innerct->kind == CTypeKind::POINTER) {
             newCPointerData(L, innerct, elemdata, true, false, false, cd);
+        } else if (innerct->kind == CTypeKind::FUNC) {
+            newCFuncData(L, innerct, elemdata, true);
         } else {
             newCData(L, innerct, elemdata, true, false, cd);
         }
+
+        return 1;
+    } else if (strcmp(method, "string") == 0) {
+        CType* innerct = ct->ptr->innertype;
+        if (innerct->kind != CTypeKind::CHAR && innerct->kind != CTypeKind::UCHAR && innerct->kind != CTypeKind::SCHAR) {
+            luaL_argerrorf(L, 2, "attempt to convert %s<%s> to string, but inner type is not a character type",
+                           getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
+        }
+
+        const char* str = *static_cast<const char**>(cd->data);
+        std::size_t len = strlen(str);
+
+        lua_pushlstring(L, str, len);
+        return 1;
+    } else if (strcmp(method, "isnull") == 0) {
+        void* ptr = *static_cast<void**>(cd->data);
+        lua_pushboolean(L, ptr == nullptr);
+        return 1;
     }
 
     return handleCDataNamecall(L, cd);
