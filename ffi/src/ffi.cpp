@@ -1,61 +1,57 @@
 #include "lute/ffi.h"
-
+#include "lute/ffi/state.h"
+#include "lute/ffi/dlib.h"
+#include "lute/ffi/utils.h"
+#include "lute/userdatas.h"
 #include "lute/runtime.h"
-
-#include "Luau/DenseHash.h"
 
 #include "lua.h"
 #include "lualib.h"
 
-#include <ffi.h>
+#include "ffi.h"
 
-int add(int a, int b) {
-    return a + b;
-}
+#include <array>
 
 namespace ffi
 {
 
-int lua_test(lua_State* L)
+int lua_dlopen(lua_State* L)
 {
-    int x = luaL_checkinteger(L, 1);
-    int y = luaL_checkinteger(L, 2);
-
-    ffi_cif cif;
-    ffi_type *args[2];
-    void *values[2];
-    int result;
-
-    args[0] = &ffi_type_sint;
-    args[1] = &ffi_type_sint;
-    values[0] = &x;
-    values[1] = &y;
-
-    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 2, &ffi_type_sint, args) != FFI_OK) {
-        luaL_errorL(L, "ffi_prep_cif failed");
-        return 1;
-    }
-
-    ffi_call(&cif, FFI_FN(add), &result, values);
-
-    lua_pushinteger(L, result);
+    const char* path = luaL_checkstring(L, 1);
+    newFFIDLHandle(L, path);
 
     return 1;
 }
 
+static void makeRegistry(lua_State* L)
+{
+    // weak registry
+    lua_newtable(L);
+
+    lua_createtable(L, 0, 1);
+    lua_pushliteral(L, "v");
+    lua_setfield(L, -2, "__mode");
+    lua_setmetatable(L, -2);
+
+    lua_rawsetfield(L, LUA_REGISTRYINDEX, kFFIWeakRegistryKey);
+}
 
 } // namespace ffi
 
 int luaopen_ffi(lua_State* L)
 {
-    luaL_register(L, "ffi", ffi::lib);
+    luteopen_ffi(L);
+    lua_setglobal(L, "ffi");
 
     return 1;
 }
 
 int luteopen_ffi(lua_State* L)
 {
-    lua_createtable(L, 0, std::size(ffi::lib) + std::size(ffi::properties));
+    ffi::newFFIState(L);
+    ffi::makeRegistry(L);
+
+    lua_createtable(L, 0, std::size(ffi::lib) - 1 + std::size(ffi::properties));
 
     for (auto& [name, func] : ffi::lib)
     {
@@ -65,6 +61,23 @@ int luteopen_ffi(lua_State* L)
         lua_pushcfunction(L, func, name);
         lua_setfield(L, -2, name);
     }
+
+    ffi::openCInterface(L);
+    lua_setfield(L, -2, ffi::kCInterfaceProperty);
+
+#ifdef _WIN32
+    const char* kLibCDL = "msvcrt.dll";
+    HMODULE ucrtbase = LoadLibraryA("ucrtbase.dll");
+    if (ucrtbase) {
+        kLibCDL = "ucrtbase.dll";
+        FreeLibrary(ucrtbase);
+    }
+#else
+    const char* kLibCDL = "libc.so.6";
+#endif
+
+    ffi::newFFIDLHandle(L, kLibCDL);
+    lua_setfield(L, -2, ffi::kLibCDLProperty);
 
     lua_setreadonly(L, -1, 1);
 

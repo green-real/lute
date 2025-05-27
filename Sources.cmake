@@ -4,6 +4,7 @@ target_sources(Lute.Runtime PRIVATE
     runtime/include/lute/require.h
     runtime/include/lute/requireutils.h
     runtime/include/lute/runtime.h
+    runtime/include/lute/userdatas.h
 
     runtime/src/options.cpp
     runtime/src/ref.cpp
@@ -20,8 +21,33 @@ target_sources(Lute.Crypto PRIVATE
 
 target_sources(Lute.FFI PRIVATE
     ffi/include/lute/ffi.h
+    ffi/include/lute/ffi/ctype.h
+    ffi/include/lute/ffi/cdata.h
+    ffi/include/lute/ffi/dlib.h
+    ffi/include/lute/ffi/state.h
+    ffi/include/lute/ffi/utils.h
 
     ffi/src/ffi.cpp
+    ffi/src/ffi_c.cpp
+    ffi/src/dlib.cpp
+    ffi/src/state.cpp
+    ffi/src/utils.cpp
+
+    # ctype src
+    ffi/src/ctype/array.cpp
+    ffi/src/ctype/base.cpp
+    ffi/src/ctype/core.cpp
+    ffi/src/ctype/func.cpp
+    ffi/src/ctype/pointer.cpp
+    ffi/src/ctype/struct.cpp
+
+    # cdata src
+    ffi/src/cdata/array.cpp
+    ffi/src/cdata/base.cpp
+    ffi/src/cdata/core.cpp
+    ffi/src/cdata/func.cpp
+    ffi/src/cdata/pointer.cpp
+    ffi/src/cdata/struct.cpp
 )
 
 target_sources(Lute.Fs PRIVATE
@@ -86,4 +112,11 @@ target_sources(Lute.Time PRIVATE
 	time/include/lute/time.h
 
 	time/src/time.cpp
+)
+
+target_sources(Lute.Test PRIVATE
+    tests/src/doctest.h
+    tests/src/main.cpp
+
+    tests/src/require.test.cpp
 )

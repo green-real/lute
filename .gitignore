@@ -5,6 +5,7 @@
 /cmake[.-]*/
 /coverage/
 /.vs/
+/.vscode/
 /fuzz/luau.pb.*
 /crash-*
 /default.prof*
@@ -18,3 +19,4 @@ extern/libuv/libuv-static.pc
 extern/libuv/DartConfiguration.tcl
 extern/*/
 generated
+CMakeUserPresets.json

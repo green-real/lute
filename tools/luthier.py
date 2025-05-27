@@ -34,6 +34,12 @@ targetMap = {
     'lute': {
         'exeName': 'lute',
     },
+    'Lute.CLI': {
+        'exeName': 'lute',
+    },
+    'Lute.Test': {
+        'exeName': 'lute-tests',
+    },
 }
 
 argParser = argparse.ArgumentParser(description='crafting a lute!', formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -307,11 +313,8 @@ def call(*args):
     return sp.call(*args, env=env)
 
 def build(args):
-    targetName = args.target
+    exeName = getExeName(args.target)
     projectPath = getProjectPath(args)
-
-    if isWindows:
-        targetName = targetName + '.exe'
 
     if args.clean:
         call(['ninja', '-C', projectPath, 'clean'])
@@ -320,7 +323,7 @@ def build(args):
         'ninja',
         '-C',
         projectPath,
-        targetName
+        exeName
     ]
 
     return call(cmd)
