@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
+#include <cstring>
 
 namespace ffi
 {
@@ -67,7 +68,7 @@ CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi 
 
     CType* ct = newCType(L, CTypeKind::FUNC, kFFICFuncTypeTag);
     ct->func = new CFuncType(L, ret, std::move(args), abi, releasectype, std::move(symbol), ffi_status);
-
+    
     if (ffi_status != FFI_OK) {
         luaL_errorL(L, "ffi_prep_cif fail: %s", ffiStatusToString(ffi_status).c_str());
     }
@@ -103,6 +104,15 @@ static int lua_namecall_CFuncType(lua_State* L)
     const char* method = lua_namecallatom(L, nullptr);
     if (method == nullptr) {
         luaL_error(L, "attempt to namecall CFuncType with invalid method");
+    }
+
+    if (strcmp(method, "symbol") == 0) {
+        if (!ct->func->symbol.empty()) {
+            lua_pushlstring(L, ct->func->symbol.c_str(), ct->func->symbol.length());
+        } else {
+            lua_pushnil(L);
+        }
+        return 1;
     }
 
     return handleCTypeNamecall(L, ct);
