@@ -132,7 +132,7 @@ bool pushCData(lua_State* L, CData* cd)
 
 void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
 {
-    std::size_t size = getFFITypeOfCType(ct)->size;
+    size_t size = getFFITypeOfCType(ct)->size;
 
     CTypeKind kind = ct->kind;
     int ltype = lua_type(L, idx);
@@ -152,7 +152,7 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
         break;
     }
     case LUA_TBUFFER: {
-        std::size_t len;
+        size_t len;
         void* src = lua_tobuffer(L, idx, &len);
         if (len > size) {
             luaL_argerrorf(L, idx, "buffer length %d is higher than expected size %d for %s<%s>", (int)len, (int)size, getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
@@ -167,7 +167,7 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
         }
 
         // TODO: is this length including the null terminator?
-        std::size_t len;
+        size_t len;
         const char* str = lua_tolstring(L, idx, &len);
 
         if (len > size) {
@@ -199,7 +199,7 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
             luaL_argerrorf(L, idx, "cannot write %s to %s<%s>", luaL_typename(L, idx), getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
         }
         
-        std::size_t cdsize = getFFITypeOfCType(cd->type)->size;
+        size_t cdsize = getFFITypeOfCType(cd->type)->size;
         if (cdsize != size) {
             luaL_argerrorf(L, idx, "CData size %d is not equal to size %d for %s<%s>", (int)cdsize, (int)size, getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
         }
@@ -225,7 +225,7 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
 
 int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
 {
-    std::size_t size = getFFITypeOfCType(ct)->size;
+    size_t size = getFFITypeOfCType(ct)->size;
 
     if (ct->kind == CTypeKind::BOOL) {
         bool b = *static_cast<bool*>(data);
@@ -235,11 +235,11 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
         return pushLuaNumberFromCData(L, data, ct);
     } else if (ct->kind == CTypeKind::ARRAY) {
         CType* elemtype = ct->array->elemtype;
-        std::size_t elemsize = getFFITypeOfCType(elemtype)->size;
-        std::size_t numelems = size / elemsize;
+        size_t elemsize = getFFITypeOfCType(elemtype)->size;
+        size_t numelems = size / elemsize;
 
         lua_createtable(L, static_cast<int>(numelems), 0);
-        for (std::size_t i = 0; i < numelems; ++i) {
+        for (size_t i = 0; i < numelems; ++i) {
             void* elemdata = static_cast<char*>(data) + i * elemsize;
             retainCType(L, elemtype); // retain the element type
 
@@ -319,7 +319,7 @@ int handleCDataNamecall(lua_State* L, CData* cd)
             luaL_argerror(L, 2, "expected value to write to CData");
         }
 
-        std::size_t size = getFFITypeOfCType(ct)->size;
+        size_t size = getFFITypeOfCType(ct)->size;
         if (size == 0) {
             luaL_argerror(L, 1, "cannot write to a type with size 0");
         }

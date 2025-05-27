@@ -50,7 +50,7 @@ static int lua_index_CPointerData(lua_State* L)
     void* ptr = *static_cast<void**>(cd->data);
 
     int idx = luaL_checkinteger(L, 2);
-    std::size_t elemsize = getFFITypeOfCType(innerct)->size;
+    size_t elemsize = getFFITypeOfCType(innerct)->size;
     void* elemdata = static_cast<char*>(ptr) + idx * elemsize;
 
     retainCData(L, 1);
@@ -86,7 +86,7 @@ static int lua_namecall_CPointerData(lua_State* L)
         }
 
         void* ptr = *static_cast<void**>(cd->data);
-        std::size_t elemsize = innerct->kind == CTypeKind::FUNC ? 0 : getFFITypeOfCType(innerct)->size;
+        size_t elemsize = innerct->kind == CTypeKind::FUNC ? 0 : getFFITypeOfCType(innerct)->size;
         void* elemdata = static_cast<char*>(ptr) + index * elemsize;
 
         retainCType(L, innerct);
@@ -108,7 +108,7 @@ static int lua_namecall_CPointerData(lua_State* L)
         }
 
         const char* str = *static_cast<const char**>(cd->data);
-        std::size_t len = strlen(str);
+        size_t len = strlen(str);
 
         lua_pushlstring(L, str, len);
         return 1;

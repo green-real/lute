@@ -24,7 +24,7 @@ static ffi_type* getCStructFieldFFIType(lua_State* L, CType* ct, bool releasecty
     return const_cast<ffi_type*>(getFFITypeOfCType(ct));
 }
 
-CStructFieldType::CStructFieldType(CType* type, std::string name, std::size_t offset, bool releasectype) : type(type), name(std::move(name)), offset(offset)
+CStructFieldType::CStructFieldType(CType* type, std::string name, size_t offset, bool releasectype) : type(type), name(std::move(name)), offset(offset)
 {
     api_check(type != nullptr);
     api_check(type->kind != CTypeKind::FUNC);
@@ -39,25 +39,25 @@ CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<s
     this->ft.size = 0;
     this->ft.alignment = 0;
 
-    std::size_t nfields = ftypes.size();
+    size_t nfields = ftypes.size();
     api_check(nfields == fnames.size());
     if (nfields == 0) return;
 
     // build ffi_type elements
     this->ft.elements = new ffi_type*[nfields + 1];
-    for (std::size_t i = 0; i < nfields; ++i) {
+    for (size_t i = 0; i < nfields; ++i) {
         this->ft.elements[i] = getCStructFieldFFIType(L, ftypes[i], releasectype);
     }
     this->ft.elements[nfields] = nullptr;
 
     // get offsets, deleted after this->fields is built
-    std::size_t* offsets = new std::size_t[nfields];
+    size_t* offsets = new size_t[nfields];
     ffi_status = ffi_get_struct_offsets(FFI_DEFAULT_ABI, &this->ft, offsets);
 
     // build fields
     this->fields.reserve(nfields);
-    for (std::size_t i = 0, j = 0; i < nfields; ++i) {
-        std::size_t offset;
+    for (size_t i = 0, j = 0; i < nfields; ++i) {
+        size_t offset;
 
         if (ftypes[i]->kind == CTypeKind::ARRAY && ftypes[i]->array->size == 0) {
             if (i == 0) continue;
@@ -73,7 +73,7 @@ CStructType::CStructType(lua_State* L, std::vector<CType*> ftypes, std::vector<s
 
     // build field_map
     this->field_map.reserve(nfields);
-    for (std::size_t i = 0; i < nfields; ++i) {
+    for (size_t i = 0; i < nfields; ++i) {
         this->field_map[this->fields[i].name] = i;
     }
 }

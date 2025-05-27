@@ -22,7 +22,7 @@ namespace ffi
 int lua_carray(lua_State* L)
 {
     CType* ct = checkCType(L, 1);
-    std::size_t size = luaL_checkinteger(L, 2);
+    size_t size = luaL_checkinteger(L, 2);
     
     if (ct->kind == CTypeKind::FUNC)
         luaL_argerror(L, 1, "element type should not be a function type");
@@ -45,9 +45,9 @@ int lua_cfunc(lua_State* L)
     
     const char* symbol = luaL_optstring(L, 3, nullptr);
 
-    std::size_t nargs = lua_objlen(L, 1);
+    size_t nargs = lua_objlen(L, 1);
     std::vector<CType*> args(nargs);
-    for (std::size_t i = 0; i < nargs; ++i) {
+    for (size_t i = 0; i < nargs; ++i) {
         lua_rawgeti(L, 1, i + 1);
         args[i] = toCType(L, -1);
         if (args[i]->kind == CTypeKind::FUNC)
@@ -58,7 +58,7 @@ int lua_cfunc(lua_State* L)
 
     // now that we validated the arguments, we can safely retain them and make the CFuncType releasectype 
     retainCType(L, 2);
-    for (std::size_t i = 0; i < nargs; ++i) {
+    for (size_t i = 0; i < nargs; ++i) {
         retainCType(L, -1);
         lua_pop(L, 1);
     }
@@ -78,10 +78,10 @@ int lua_cstruct(lua_State* L)
     luaL_checktype(L, 1, LUA_TTABLE);
     const char* debugname = luaL_optstring(L, 2, "");
 
-    std::size_t nfields = lua_objlen(L, 1);
+    size_t nfields = lua_objlen(L, 1);
     std::vector<CType*> ftypes(nfields);
     std::vector<std::string> fnames(nfields);
-    for (std::size_t i = 0; i < nfields; ++i) {
+    for (size_t i = 0; i < nfields; ++i) {
         lua_rawgeti(L, 1, i + 1);
         luaL_checktype(L, -1, LUA_TTABLE);
         
@@ -109,7 +109,7 @@ int lua_cstruct(lua_State* L)
     }
 
     // now that we validated the arguments, we can safely retain them and make the CStructType releasectype 
-    for (std::size_t i = 0; i < nfields; ++i) {
+    for (size_t i = 0; i < nfields; ++i) {
         retainCType(L, -1);
         lua_pop(L, 1);
     }
@@ -129,7 +129,7 @@ int lua_cnew(lua_State* L)
     }
 
     const ffi_type* ft = getFFITypeOfCType(ct);
-    std::size_t size = ft->size;
+    size_t size = ft->size;
     if (size == 0) {
         luaL_argerror(L, 1, "CType cannot be a zero-sized type");
     }
@@ -286,7 +286,7 @@ int lua_ccast(lua_State* L)
 
 int lua_cstring(lua_State* L)
 {
-    std::size_t len = 0;
+    size_t len = 0;
     const char* str = luaL_checklstring(L, 1, &len);
 
 
@@ -335,7 +335,7 @@ int openCInterface(lua_State* L)
 
     initFFIDLHandle(L);
 
-    lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + static_cast<std::size_t>(CBaseTypeKind::__COUNT__));
+    lua_createtable(L, 0, std::size(clib) - 1 + std::size(cproperties) + static_cast<size_t>(CBaseTypeKind::__COUNT__));
     luaL_register(L, nullptr, clib);
     
 #pragma region CBaseTypes

@@ -157,7 +157,7 @@ std::string toStringCType(CType* ct)
         case CTypeKind::FUNC:
             writeType(t->func->ret, depth);
             ss << " (";
-            for (std::size_t i = 0; i < t->func->args.size(); ++i) {
+            for (size_t i = 0; i < t->func->args.size(); ++i) {
                 writeType(t->func->args[i], depth);
                 if (i < t->func->args.size() - 1)
                     ss << ", ";

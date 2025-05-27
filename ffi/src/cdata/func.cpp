@@ -17,7 +17,7 @@ CData* newCFuncData(lua_State* L, CType* type, void* data, bool releasectype, FF
     api_check(type->kind == CTypeKind::FUNC); // type must be a function type
     api_check(dlib == nullptr || dlib->selfref != LUA_NOREF); // dlib must be a valid FFIDLHandle which was retained before this call
 
-    std::size_t nargs = type->func->args.size();
+    size_t nargs = type->func->args.size();
 
     CData* cd = newCData(L, type, data, releasectype, false, nullptr);
     cd->kind = CDataKind::FUNC;
@@ -105,7 +105,7 @@ static int lua_call_CFuncData(lua_State* L)
         ret_data = retcd->data;
         // pushCData(L, retcd);
     } else if (ret_type->kind != CTypeKind::VOID) {
-        std::size_t ret_size = getFFITypeOfCType(ret_type)->size;
+        size_t ret_size = getFFITypeOfCType(ret_type)->size;
         if (ret_size < sizeof(ffi_arg)) {
             ret_size = sizeof(ffi_arg); // ensure we have enough space for ffi_arg
         }

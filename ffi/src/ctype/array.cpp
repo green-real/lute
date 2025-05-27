@@ -12,7 +12,7 @@
 namespace ffi
 {
 
-CArrayType::CArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype) : elemtype(elemtype), size(size), releasectype(releasectype)
+CArrayType::CArrayType(lua_State* L, CType* elemtype, size_t size, bool releasectype) : elemtype(elemtype), size(size), releasectype(releasectype)
 {
     ft.type = FFI_TYPE_STRUCT;
     ft.size = sizeOfCType(elemtype) * size;
@@ -30,7 +30,7 @@ void CArrayType::releaseDependencies(lua_State* L) const
 }
 
 // if releasectype, retainCType must have been called on inner before calling newCArrayType
-CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype)
+CType* newCArrayType(lua_State* L, CType* elemtype, size_t size, bool releasectype)
 {
     api_check(elemtype != nullptr);
     api_check(elemtype->kind != CTypeKind::FUNC);

@@ -32,11 +32,11 @@ void writeLuaTableToCArray(lua_State* L, int idx, void* data, CType* ct)
 
     CType* elemtype = ct->array->elemtype;
 
-    std::size_t size = getFFITypeOfCType(ct)->size;
-    std::size_t elemsize = getFFITypeOfCType(elemtype)->size;
-    std::size_t numelems = size / elemsize;
+    size_t size = getFFITypeOfCType(ct)->size;
+    size_t elemsize = getFFITypeOfCType(elemtype)->size;
+    size_t numelems = size / elemsize;
 
-    for (std::size_t i = 0; i < numelems; ++i) {
+    for (size_t i = 0; i < numelems; ++i) {
         lua_rawgeti(L, idx, i + 1);
         if (lua_isnil(L, -1)) {
             luaL_argerrorf(L, idx, "table has fewer elements than expected (%d elements expected)", (int)numelems);
@@ -59,7 +59,7 @@ static int lua_index_CArrayData(lua_State* L)
             luaL_argerrorf(L, 2, "index %d out of bounds for array of size %d", idx, (int)ct->array->size);
         }
 
-        std::size_t elemsize = getFFITypeOfCType(ct->array->elemtype)->size;
+        size_t elemsize = getFFITypeOfCType(ct->array->elemtype)->size;
         void* elemdata = static_cast<char*>(cd->data) + idx * elemsize;
 
         retainCData(L, 1);
@@ -94,7 +94,7 @@ static int lua_namecall_CArrayData(lua_State* L)
         }
 
         const char* str = static_cast<const char*>(cd->data);
-        std::size_t len = strlen(str);
+        size_t len = strlen(str);
         if (len > ct->array->size) {
             len = ct->array->size; // ensure we don't read beyond the array size
         }

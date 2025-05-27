@@ -81,7 +81,7 @@ void initCBaseType(lua_State* L)
     lua_pop(L, 1);
 }
 
-const ffi_type* getCIntFFIType(std::size_t size, bool isSigned)
+const ffi_type* getCIntFFIType(size_t size, bool isSigned)
 {
     switch (size)
     {
