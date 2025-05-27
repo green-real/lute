@@ -202,6 +202,16 @@ void writeLuaValueToCData(lua_State* L, int idx, void* data, CType* ct)
         memcpy(data, cd->data, size);
         break;
     }
+    case LUA_TNIL: {
+        if (kind == CTypeKind::POINTER) {
+            // writing nil to a pointer is allowed, it will set the pointer to nullptr
+            memset(data, 0, size);
+            return;
+        }
+
+        luaL_argerrorf(L, idx, "cannot write nil to %s<%s>", getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
+        break;
+    };
     default:
         luaL_argerrorf(L, idx, "cannot write %s to %s<%s>", luaL_typename(L, idx), getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
         break;
