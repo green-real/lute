@@ -233,7 +233,7 @@ void releaseCType(lua_State* L, CType* ct);
 
 bool pushCType(lua_State* L, CType* ctype);
 
-const ffi_type* getCIntFFIType(std::size_t size, bool isSigned);
+const ffi_type* getCIntFFIType(size_t size, bool isSigned);
 
 std::string toStringCType(CType* ct);
 std::string getNameCType(CType* ct);
