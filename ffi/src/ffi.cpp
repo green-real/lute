@@ -12,6 +12,12 @@
 
 #include <array>
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
 namespace ffi
 {
 
