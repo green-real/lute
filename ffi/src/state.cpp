@@ -1,5 +1,6 @@
 #include "lute/ffi/state.h"
 #include "lute/ffi/utils.h"
+#include "lute/runtime.h"
 
 #include "lute/userdatas.h"
 
@@ -10,9 +11,34 @@
 namespace ffi
 {
 
-FFIState::FFIState(lua_State* L) {}
+FFIState::FFIState(lua_State* L) {
+    this->GL = L;
+    this->runtime = getRuntime(L);
+    this->unrefsScheduled = false;
+}
 
 FFIState::~FFIState() {}
+
+void FFIState::addPendingUnref(int ref)
+{
+    this->pendingUnrefs.push_back(ref);
+    if (!this->unrefsScheduled) {
+        this->runtime->schedule([this]() {
+            this->processPendingUnrefs();
+        });
+
+        this->unrefsScheduled = true;
+    }
+}
+
+void FFIState::processPendingUnrefs()
+{
+    for (int ref : this->pendingUnrefs) {
+        lua_unref(this->GL, ref);
+    }
+    this->pendingUnrefs.clear();
+    this->unrefsScheduled = false;
+}
 
 FFIState* newFFIState(lua_State* L)
 {

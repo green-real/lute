@@ -1,4 +1,5 @@
 #include "lute/ffi.h"
+#include "lute/ffi/state.h"
 #include "lute/ffi/ctype.h"
 #include "lute/ffi/utils.h"
 #include "lute/userdatas.h"
@@ -94,8 +95,9 @@ void retainCType(lua_State* L, int idx)
     api_check(ct->refcount != 0 || ct->selfref == LUA_NOREF);
 
     ct->refcount++;
-    if (ct->selfref == LUA_NOREF)
-        ct->selfref = lua_ref(L, idx); 
+    if (ct->selfref == LUA_NOREF) {
+        ct->selfref = lua_ref(L, idx);
+    }
 }
 
 // retains a CType that is currently retained, so that it is not garbage collected until it is released
@@ -118,7 +120,10 @@ void releaseCType(lua_State* L, CType* ct)
 
     ct->refcount--;
     if (ct->refcount == 0) {
-        lua_unref(L, ct->selfref);
+        FFIState* ffiState = getFFIState(L);
+        api_check(ffiState != nullptr);
+
+        ffiState->addPendingUnref(ct->selfref);        
         ct->selfref = LUA_NOREF;
     }
 }

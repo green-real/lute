@@ -1,4 +1,5 @@
 #include "lute/ffi.h"
+#include "lute/ffi/state.h"
 #include "lute/ffi/ctype.h"
 #include "lute/ffi/cdata.h"
 #include "lute/ffi/utils.h"
@@ -84,8 +85,9 @@ void retainCData(lua_State* L, int idx)
     api_check(cd->refcount != 0 || cd->selfref == LUA_NOREF);
 
     cd->refcount++;
-    if (cd->selfref == LUA_NOREF)
-        cd->selfref = lua_ref(L, idx); 
+    if (cd->selfref == LUA_NOREF) {
+        cd->selfref = lua_ref(L, idx);
+    }
 }
 
 // retains a CData that is currently retained, so that it is not garbage collected until it is released
@@ -108,7 +110,10 @@ void releaseCData(lua_State* L, CData* cd)
 
     cd->refcount--;
     if (cd->refcount == 0) {
-        lua_unref(L, cd->selfref);
+        FFIState* ffiState = getFFIState(L);
+        api_check(ffiState != nullptr);
+
+        ffiState->addPendingUnref(cd->selfref);   
         cd->selfref = LUA_NOREF;
     }
 }
@@ -365,7 +370,7 @@ void handleCDataDtor(lua_State* L, CData* cd)
     if (cd->managed && cd->data != nullptr) {
         free(cd->data);
     }
-
+    
     if (cd->dependent != nullptr) {
         releaseCData(L, cd->dependent);
     }

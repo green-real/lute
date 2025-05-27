@@ -1,5 +1,6 @@
 #include "lute/ffi/dlib.h"
 #include "lute/ffi.h"
+#include "lute/ffi/state.h"
 #include "lute/ffi/utils.h"
 #include "lute/userdatas.h"
 
@@ -98,7 +99,11 @@ void releaseFFIDLHandle(lua_State* L, FFIDLHandle* dl)
 
     dl->refcount--;
     if (dl->refcount == 0) {
-        lua_unref(L, dl->selfref);
+        // TODO: lua_unref call is unsafe here, move it somewhere else
+        FFIState* ffiState = getFFIState(L);
+        api_check(ffiState != nullptr);
+
+        ffiState->addPendingUnref(dl->selfref);   
         dl->selfref = LUA_NOREF;
     }
 }
