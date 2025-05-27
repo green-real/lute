@@ -39,6 +39,12 @@ int lua_cfunc(lua_State* L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
 
+    CType* ret = checkCType(L, 2);
+    if (ret->kind == CTypeKind::FUNC)
+        luaL_argerror(L, 2, "return type should not be a function type");
+    
+    const char* symbol = luaL_optstring(L, 3, nullptr);
+
     std::size_t nargs = lua_objlen(L, 1);
     std::vector<CType*> args(nargs);
     for (std::size_t i = 0; i < nargs; ++i) {
@@ -50,20 +56,19 @@ int lua_cfunc(lua_State* L)
             luaL_argerrorf(L, 1, "at index %d, element type should not not be void", i + 1);
     }
 
-    CType* ret = checkCType(L, 2);
-    if (ret->kind == CTypeKind::FUNC)
-        luaL_argerror(L, 2, "return type should not be a function type");
-
-    const char* symbol = luaL_optstring(L, 3, nullptr);
-
     // now that we validated the arguments, we can safely retain them and make the CFuncType releasectype 
     retainCType(L, 2);
     for (std::size_t i = 0; i < nargs; ++i) {
         retainCType(L, -1);
         lua_pop(L, 1);
     }
-    
-    newCFuncType(L, ret, std::move(args), FFI_DEFAULT_ABI, true, symbol);
+
+    std::string symbol_str;
+    if (symbol != nullptr) {
+        symbol_str = symbol;
+    }
+
+    newCFuncType(L, ret, std::move(args), FFI_DEFAULT_ABI, true, std::move(symbol_str));
 
     return 1;
 }
@@ -275,6 +280,41 @@ int lua_ccast(lua_State* L)
             // TODO: add support for casting numeric types to other numeric types
             break;
     }
+
+    return 1;
+}
+
+int lua_cstring(lua_State* L)
+{
+    std::size_t len = 0;
+    const char* str = luaL_checklstring(L, 1, &len);
+
+
+    CType* innerct = nullptr;
+
+    if (lua_isboolean(L, 2)) {
+        bool sign = lua_toboolean(L, 2);
+        if (sign) {
+            innerct = newCBaseType(L, CBaseTypeKind::CHAR, &ffi_type_schar);
+        } else {
+            innerct = newCBaseType(L, CBaseTypeKind::UCHAR, &ffi_type_uchar);
+        }
+    } else {
+        char c = -1;
+        innerct = newCBaseType(L, CBaseTypeKind::CHAR, &(c < 0 ? ffi_type_schar : ffi_type_uchar));
+    }
+
+    retainCType(L, -1);
+    CType* ct = newCPointerType(L, innerct, true);
+
+    void* data = malloc(len + 1);
+    memcpy(data, str, len + 1);
+
+    void* ptr = malloc(sizeof(void*));
+    *static_cast<void**>(ptr) = data; // store the string data in a pointer
+
+    retainCType(L, -1); // retain the CType
+    newCPointerData(L, ct, ptr, true, true, true, nullptr); // create a CPointerData that holds the string data
 
     return 1;
 }

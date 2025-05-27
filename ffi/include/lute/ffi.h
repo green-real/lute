@@ -50,6 +50,8 @@ int lua_cload(lua_State* L);
 
 int lua_ccast(lua_State* L);
 
+int lua_cstring(lua_State* L);
+
 static const luaL_Reg clib[] = {
     {"array", lua_carray},
     {"func", lua_cfunc},
@@ -58,6 +60,7 @@ static const luaL_Reg clib[] = {
     {"sizeof", lua_csizeof},
     {"load", lua_cload},
     {"cast", lua_ccast},
+    {"string", lua_cstring},
 
     {nullptr, nullptr},
 };
