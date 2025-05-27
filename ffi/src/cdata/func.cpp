@@ -105,7 +105,12 @@ static int lua_call_CFuncData(lua_State* L)
         ret_data = retcd->data;
         // pushCData(L, retcd);
     } else if (ret_type->kind != CTypeKind::VOID) {
-        ret_data = malloc(getFFITypeOfCType(ct->func->ret)->size);
+        std::size_t ret_size = getFFITypeOfCType(ret_type)->size;
+        if (ret_size < sizeof(ffi_arg)) {
+            ret_size = sizeof(ffi_arg); // ensure we have enough space for ffi_arg
+        }
+
+        ret_data = malloc(ret_size);
 
         retainCType(L, ret_type);
 
