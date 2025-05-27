@@ -220,14 +220,6 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
         return pushLuaNumberFromCData(L, data, ct);
     } else if (ct->kind == CTypeKind::ARRAY) {
         CType* elemtype = ct->array->elemtype;
-        if (elemtype->kind == CTypeKind::CHAR
-            || elemtype->kind == CTypeKind::UCHAR
-            || elemtype->kind == CTypeKind::SCHAR) {
-            const char* str = static_cast<const char*>(data);
-            lua_pushlstring(L, str, strlen(str));
-            return 1;
-        }
-
         std::size_t elemsize = getFFITypeOfCType(elemtype)->size;
         std::size_t numelems = size / elemsize;
 
@@ -276,16 +268,12 @@ int pushLuaValueFromCData(lua_State* L, void* data, CType* ct, int cdataidx)
         }
         return 1;
     } else if (ct->kind == CTypeKind::POINTER) {
-        CType* innerct = ct->ptr->innertype;
-        if (innerct->kind == CTypeKind::CHAR
-            || innerct->kind == CTypeKind::UCHAR
-            || innerct->kind == CTypeKind::SCHAR) {
-            lua_pushlstring(L, *static_cast<const char**>(data), size);
-            return 1;
-        }
         
-        luaL_error(L, "cannot read %s<%s> as Lua value", getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
-        return 0;
+        void** ptr = static_cast<void**>(data);
+        void** buf = static_cast<void**>(lua_newbuffer(L, size));
+        *buf = *ptr;
+
+        return 1;
     } else {
         luaL_error(L, "cannot read %s<%s> as Lua value", getUDNameCType(ct).c_str(), toStringCType(ct).c_str());
     }
