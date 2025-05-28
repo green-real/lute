@@ -72,7 +72,7 @@ void retainFFIDLHandle(lua_State* L, int idx)
 {
     FFIDLHandle* dl = toFFIDLHandle(L, idx);
     api_check(dl != nullptr);
-    api_check(dl->refcount != 0 || dl->selfref == LUA_NOREF);
+    api_check(dl->refcount == 0 || dl->selfref != LUA_NOREF);
 
     dl->refcount++;
     if (dl->selfref == LUA_NOREF)

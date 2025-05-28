@@ -82,7 +82,7 @@ void retainCData(lua_State* L, int idx)
 {
     CData* cd = toCData(L, idx);
     api_check(cd != nullptr);
-    api_check(cd->refcount != 0 || cd->selfref == LUA_NOREF);
+    api_check(cd->refcount == 0 || cd->selfref != LUA_NOREF);
 
     cd->refcount++;
     if (cd->selfref == LUA_NOREF) {
@@ -95,7 +95,7 @@ void retainCData(lua_State* L, int idx)
 void retainCData(lua_State* L, CData* cd)
 {
     api_check(cd != nullptr);
-    api_check(cd->refcount != 0);
+    api_check(cd->refcount > 0);
     api_check(cd->selfref != LUA_NOREF);
 
     cd->refcount++;

@@ -92,7 +92,7 @@ void retainCType(lua_State* L, int idx)
 {
     CType* ct = toCType(L, idx);
     api_check(ct != nullptr);
-    api_check(ct->refcount != 0 || ct->selfref == LUA_NOREF);
+    api_check(ct->refcount == 0 || ct->selfref != LUA_NOREF);
 
     ct->refcount++;
     if (ct->selfref == LUA_NOREF) {
