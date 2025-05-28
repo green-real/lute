@@ -26,18 +26,18 @@ CData* checkCStructData(lua_State* L, int idx)
 
 void writeLuaTableToCStruct(lua_State* L, int idx, void* data, CType* ct)
 {
-    std::size_t size = getFFITypeOfCType(ct)->size;
+    size_t size = getFFITypeOfCType(ct)->size;
 
     api_check(ct->kind == CTypeKind::STRUCT);
     api_check(ct->struct_->ft.size == size);
 
-    std::size_t offset = 0;
+    size_t offset = 0;
 
     // check if the table is an array or a dictionary
     int objlen = lua_objlen(L, idx);
     if (objlen == 0) {
         for (const auto& field : ct->struct_->fields) {
-            std::size_t field_size = getFFITypeOfCType(field.type)->size;
+            size_t field_size = getFFITypeOfCType(field.type)->size;
 
             lua_getfield(L, idx, field.name.c_str());
             if (lua_isnil(L, -1)) {
@@ -54,7 +54,7 @@ void writeLuaTableToCStruct(lua_State* L, int idx, void* data, CType* ct)
 
         for (int i = 0; i < objlen; ++i) {
             CType* fieldtype = ct->struct_->fields[i].type;
-            std::size_t field_size = getFFITypeOfCType(fieldtype)->size;
+            size_t field_size = getFFITypeOfCType(fieldtype)->size;
             lua_rawgeti(L, idx, i + 1);
             if (lua_isnil(L, -1)) {
                 luaL_argerrorf(L, idx, "table is missing field at index %d", i + 1);
@@ -81,7 +81,7 @@ static int lua_index_CStructData(lua_State* L)
 
         auto it = ct->struct_->field_map.find(field_name);
         if (it != ct->struct_->field_map.end()) {
-            std::size_t offset = ct->struct_->fields[it->second].offset;
+            size_t offset = ct->struct_->fields[it->second].offset;
             CType* field_type = ct->struct_->fields[it->second].type;
 
             void* field_data = static_cast<char*>(cd->data) + offset;

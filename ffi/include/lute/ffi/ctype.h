@@ -116,15 +116,15 @@ enum class CBaseTypeKind {
 
 struct CArrayType {
     CType* elemtype;
-    std::size_t size;
+    size_t size;
     ffi_type ft;
     bool releasectype; // if true, CArrayType will call releaseCType on inner when garbage collected
 
     void releaseDependencies(lua_State* L) const;
     ~CArrayType();
 private:
-    CArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
-    friend CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
+    CArrayType(lua_State* L, CType* elemtype, size_t size, bool releasectype);
+    friend CType* newCArrayType(lua_State* L, CType* elemtype, size_t size, bool releasectype);
 };
 
 struct CFuncType {
@@ -159,17 +159,17 @@ private:
 struct CStructFieldType {
     CType* type;
     std::string name;
-    std::size_t offset;
+    size_t offset;
 
 private:
-    CStructFieldType(CType* type, std::string name, std::size_t offset, bool releasectype);
+    CStructFieldType(CType* type, std::string name, size_t offset, bool releasectype);
 
     friend CStructType;
 };
 
 struct CStructType {
     std::vector<CStructFieldType> fields;
-    std::unordered_map<std::string, std::size_t> field_map;
+    std::unordered_map<std::string, size_t> field_map;
     std::string debugname;
     ffi_type ft;
     bool releasectype; // if true, CStructType will call releaseCType on its struct field types when garbage collected
@@ -197,7 +197,7 @@ struct CType {
 };
 
 CType* newCType(lua_State* L, CTypeKind kind, int utag);
-CType* newCArrayType(lua_State* L, CType* elemtype, std::size_t size, bool releasectype);
+CType* newCArrayType(lua_State* L, CType* elemtype, size_t size, bool releasectype);
 CType* newCBaseType(lua_State* L, CBaseTypeKind kind, const ffi_type* ft);
 CType* newCFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi abi, bool releasectype, std::string symbol);
 CType* newCPointerType(lua_State* L, CType* innertype, bool releasectype);
@@ -218,6 +218,7 @@ CType* checkCFuncType(lua_State* L, int idx);
 CType* checkCPointerType(lua_State* L, int idx);
 CType* checkCStructType(lua_State* L, int idx);
 
+void initCType(lua_State* L);
 void initCArrayType(lua_State* L);
 void initCBaseType(lua_State* L);
 void initCFuncType(lua_State* L);
@@ -233,7 +234,8 @@ void releaseCType(lua_State* L, CType* ct);
 
 bool pushCType(lua_State* L, CType* ctype);
 
-const ffi_type* getCIntFFIType(std::size_t size, bool isSigned);
+const ffi_type* getCIntFFIType(size_t size, bool isSigned);
+void registerCBaseTypes(lua_State* L);
 
 std::string toStringCType(CType* ct);
 std::string getNameCType(CType* ct);

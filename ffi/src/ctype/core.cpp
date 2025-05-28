@@ -59,6 +59,15 @@ CType* checkCType(lua_State* L, int idx)
     return nullptr;
 }
 
+void initCType(lua_State* L)
+{
+    initCArrayType(L);
+    initCBaseType(L);
+    initCFuncType(L);
+    initCPointerType(L);
+    initCStructType(L);
+}
+
 int handleCTypeNamecall(lua_State* L, CType* ct)
 {
     api_check(ct != nullptr);
@@ -157,7 +166,7 @@ std::string toStringCType(CType* ct)
         case CTypeKind::FUNC:
             writeType(t->func->ret, depth);
             ss << " (";
-            for (std::size_t i = 0; i < t->func->args.size(); ++i) {
+            for (size_t i = 0; i < t->func->args.size(); ++i) {
                 writeType(t->func->args[i], depth);
                 if (i < t->func->args.size() - 1)
                     ss << ", ";

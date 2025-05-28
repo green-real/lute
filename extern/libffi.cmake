@@ -8,7 +8,9 @@ set(SOURCES_LIST
     ${LIBFFI_SOURCE_DIR}/src/java_raw_api.c
     ${LIBFFI_SOURCE_DIR}/src/prep_cif.c
     ${LIBFFI_SOURCE_DIR}/src/raw_api.c
-    ${LIBFFI_SOURCE_DIR}/src/types.c)
+    ${LIBFFI_SOURCE_DIR}/src/types.c
+    ${LIBFFI_SOURCE_DIR}/src/tramp.c
+    )
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     list(APPEND SOURCES_LIST ${LIBFFI_SOURCE_DIR}/src/debug.c)

@@ -53,7 +53,7 @@ struct CData
 
 struct CFuncData
 {
-    std::size_t nargs;
+    size_t nargs;
     void** args; // preallocated argument values
     void** argstorage; // storage for arguments, used to avoid reallocating memory for each call if not using CData as argument
     CData* retcd; // if not null, this is the CData that will be returned as the result of the function call
@@ -98,6 +98,7 @@ int handleCDataNamecall(lua_State* L, CData* cd);
 int handleCDataToString(lua_State* L, CData* cd);
 void handleCDataDtor(lua_State* L, CData* cd);
 
+void initCData(lua_State* L);
 void initCArrayData(lua_State* L);
 void initCBaseData(lua_State* L);
 void initCFuncData(lua_State* L);

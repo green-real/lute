@@ -140,17 +140,17 @@ int pushLuaNumberFromCData(lua_State* L, void* data, CType* ct)
     case CTypeKind::ULONG: PUSHNUM(unsigned long); break;
     case CTypeKind::LONGLONG: PUSHNUM(long long); break;
     case CTypeKind::ULONGLONG: PUSHNUM(unsigned long long); break;
-    case CTypeKind::INT8_T: PUSHNUM(std::int8_t); break;
-    case CTypeKind::UINT8_T: PUSHNUM(std::uint8_t); break;
-    case CTypeKind::INT16_T: PUSHNUM(std::int16_t); break;
-    case CTypeKind::UINT16_T: PUSHNUM(std::uint16_t); break;
-    case CTypeKind::INT32_T: PUSHNUM(std::int32_t); break;
-    case CTypeKind::UINT32_T: PUSHNUM(std::uint32_t); break;
-    case CTypeKind::INT64_T: PUSHNUM(std::int64_t); break;
-    case CTypeKind::UINT64_T: PUSHNUM(std::uint64_t); break;
+    case CTypeKind::INT8_T: PUSHNUM(int8_t); break;
+    case CTypeKind::UINT8_T: PUSHNUM(uint8_t); break;
+    case CTypeKind::INT16_T: PUSHNUM(int16_t); break;
+    case CTypeKind::UINT16_T: PUSHNUM(uint16_t); break;
+    case CTypeKind::INT32_T: PUSHNUM(int32_t); break;
+    case CTypeKind::UINT32_T: PUSHNUM(uint32_t); break;
+    case CTypeKind::INT64_T: PUSHNUM(int64_t); break;
+    case CTypeKind::UINT64_T: PUSHNUM(uint64_t); break;
 
-    case CTypeKind::SIZE_T: PUSHNUM(std::size_t); break;
-    case CTypeKind::SSIZE_T: PUSHNUM(std::make_signed_t<std::size_t>); break;
+    case CTypeKind::SIZE_T: PUSHNUM(size_t); break;
+    case CTypeKind::SSIZE_T: PUSHNUM(std::make_signed_t<size_t>); break;
 
     case CTypeKind::FLOAT: PUSHNUM(float); break;
     case CTypeKind::DOUBLE: PUSHNUM(double); break;

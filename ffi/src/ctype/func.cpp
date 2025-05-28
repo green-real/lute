@@ -38,7 +38,7 @@ CFuncType::CFuncType(lua_State* L, CType* ret, std::vector<CType*> args, ffi_abi
     // validate types and build cif.arg_types
     ffi_type* ret_ft = getCFuncArgFFIType(L, this->ret, this->releasectype, true);
     ffi_type** arg_ftypes = new ffi_type*[nargs];
-    for (std::uint8_t i = 0; i < nargs; ++i) {
+    for (uint8_t i = 0; i < nargs; ++i) {
         arg_ftypes[i] = getCFuncArgFFIType(L, this->args[i], this->releasectype);
     }
 
