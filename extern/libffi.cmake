@@ -1,3 +1,6 @@
+# Adapted from https://github.com/am11/libffi/blob/feature/cmake-build-configs/CMakeLists.txt
+# Modified so everything is done in a single file and some fixes related to make it build with MSVC
+
 cmake_minimum_required(VERSION 3.10)
 project(libffi C ASM)
 
@@ -409,9 +412,9 @@ set_property(TARGET libffi_obj PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 add_library(libffi STATIC $<TARGET_OBJECTS:libffi_obj>)
 
-target_include_directories(
-  libffi PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>")
+target_include_directories(libffi PUBLIC
+    ${CMAKE_CURRENT_BINARY_DIR}/include
+)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
