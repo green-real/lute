@@ -202,7 +202,7 @@ static bool runFile(Runtime& runtime, const char* name, lua_State* GL)
 
 static void displayHelp(const char* argv0)
 {
-    printf("Usage: %s <command> [options] [arguments...]\n", argv0);
+    printf("Usage: lute <command> [options] [arguments...]\n");
     printf("\n");
     printf("Commands:\n");
     printf("  run (default)   Run a Luau script.\n");
@@ -210,15 +210,15 @@ static void displayHelp(const char* argv0)
     printf("  compile         Compile a Luau script into the executable.\n");
     printf("\n");
     printf("Run Options (when using 'run' or no command):\n");
-    printf("  %s [run] <script.luau> [args...]\n", argv0);
+    printf("  lute [run] <script.luau> [args...]\n");
     printf("    Executes the script, passing [args...] to it.\n");
     printf("\n");
     printf("Check Options:\n");
-    printf("  %s check <file1.luau> [file2.luau...]\n", argv0);
+    printf("  lute check <file1.luau> [file2.luau...]\n");
     printf("    Performs a type check on the specified files.\n");
     printf("\n");
     printf("Compile Options:\n");
-    printf("  %s compile <script.luau> [output_executable]\n", argv0);
+    printf("  lute compile <script.luau> [output_executable]\n");
     printf("    Compiles the script, embedding it into a new executable.\n");
     printf("\n");
     printf("General Options:\n");
@@ -227,7 +227,7 @@ static void displayHelp(const char* argv0)
 
 static void displayRunHelp(const char* argv0)
 {
-    printf("Usage: %s run <script.luau> [args...]\n", argv0);
+    printf("Usage: lute run <script.luau> [args...]\n");
     printf("\n");
     printf("Run Options:\n");
     printf("  -h, --help    Display this usage message.\n");
@@ -235,7 +235,7 @@ static void displayRunHelp(const char* argv0)
 
 static void displayCheckHelp(const char* argv0)
 {
-    printf("Usage: %s check <file1.luau> [file2.luau...]\n", argv0);
+    printf("Usage: lute check <file1.luau> [file2.luau...]\n");
     printf("\n");
     printf("Check Options:\n");
     printf("  -h, --help    Display this usage message.\n");
@@ -243,7 +243,7 @@ static void displayCheckHelp(const char* argv0)
 
 static void displayCompileHelp(const char* argv0)
 {
-    printf("Usage: %s compile <script.luau> [output_executable]\n", argv0);
+    printf("Usage: lute compile <script.luau> [output_executable]\n");
     printf("\n");
     printf("Compile Options:\n");
     printf("  output_executable    Optional name for the compiled executable.\n");
@@ -414,7 +414,7 @@ int main(int argc, char** argv)
         program_argv = argv;
 
         bool success = runBytecode(runtime, embedded.BytecodeData, "=__EMBEDDED__", GL);
-        
+
         return success ? 0 : 1;
     }
 
