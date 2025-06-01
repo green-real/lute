@@ -20,6 +20,7 @@ int luaopen_ffi(lua_State* L)
 
 int luteopen_ffi(lua_State* L)
 {
+    lua_createtable(L, 0, std::size(ffi::lib) - 1 + std::size(ffi::properties));
     luaL_register(L, nullptr, ffi::lib);
 
     lua_setreadonly(L, -1, 1);
