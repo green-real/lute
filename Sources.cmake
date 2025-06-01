@@ -23,6 +23,8 @@ target_sources(Lute.FFI PRIVATE
     ffi/include/lute/ffi.h
 
     ffi/src/ffi.cpp
+    ffi/src/ffi_c.cpp
+    ffi/src/ffi_c.h
 )
 
 target_sources(Lute.Fs PRIVATE
