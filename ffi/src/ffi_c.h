@@ -11,4 +11,6 @@ static const luaL_Reg clib[] = {
     {nullptr, nullptr}
 };
 
+int openCInterface(lua_State* L);
+
 } // namespace ffi

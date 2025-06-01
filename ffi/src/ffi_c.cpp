@@ -3,6 +3,19 @@
 #include "lua.h"
 #include "lualib.h"
 
+#include <array>
+
 namespace ffi
 {
+
+int openCInterface(lua_State* L)
+{
+    lua_createtable(L, 0, std::size(clib) - 1);
+    luaL_register(L, nullptr, clib);
+
+    lua_setreadonly(L, -1, 1);
+
+    return 1;
+}
+
 }
