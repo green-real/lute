@@ -2,6 +2,8 @@
 
 #include "./utils.h"
 
+#include "tcc/libtcc.h"
+
 #include "lute/userdatas.h"
 
 #include "Luau/Common.h"
@@ -106,8 +108,63 @@ static CType* newCType(lua_State* L, CTypeKind kind)
     return ctype;
 }
 
+static void validateCType(CType* ctype, bool allowFunction, bool allowVoid, bool allowIncompleteArray, bool retainedCType)
+{
+#ifndef NDEBUG
+    api_check(ctype != nullptr);
+    if (!allowFunction)
+        api_check(ctype->kind != CTypeKind::Function);
+    if (!allowVoid)
+        api_check(!(ctype->kind == CTypeKind::Base && ctype->base->kind == CBaseTypeKind::Void));
+    if (!allowIncompleteArray)
+        api_check(!(ctype->kind == CTypeKind::Array && ctype->array->elementCount == 0));
+
+    if (retainedCType)
+    {
+        api_check(ctype->refCount > 0);
+        api_check(ctype->luaRef != LUA_NOREF);
+    }
+#endif
+}
+
+static void validateCTypes(
+    const std::vector<CType*>& ctypes,
+    bool allowFunction,
+    bool allowVoid,
+    bool allowIncompleteArray,
+    bool allowIncompleteArrayLast,
+    bool retainedCTypes
+)
+{
+#ifndef NDEBUG
+    for (size_t i = 0; i < ctypes.size(); ++i)
+    {
+        CType* ctype = ctypes[i];
+        api_check(ctype != nullptr);
+
+        if (!allowFunction)
+            api_check(ctype->kind != CTypeKind::Function);
+        if (!allowVoid)
+            api_check(!(ctype->kind == CTypeKind::Base && ctype->base->kind == CBaseTypeKind::Void));
+
+        if (!allowIncompleteArray && allowIncompleteArrayLast)
+            api_check(!(ctype->kind == CTypeKind::Array && ctype->array->elementCount == 0 && i + 1 < ctypes.size()));
+        else if (!allowIncompleteArray)
+            api_check(!(ctype->kind == CTypeKind::Array && ctype->array->elementCount == 0));
+
+        if (retainedCTypes)
+        {
+            api_check(ctype->refCount > 0);
+            api_check(ctype->luaRef != LUA_NOREF);
+        }
+    }
+#endif
+}
+
 CType* newCArrayType(lua_State* L, CType* elementType, size_t elementCount, bool retainedCType)
 {
+    validateCType(elementType, false, false, true, retainedCType);
+
     CType* ctype = newCType(L, CTypeKind::Array);
     ctype->array = new CArrayType{
         .elementType = elementType,
@@ -130,6 +187,122 @@ CType* newCBaseType(lua_State* L, CBaseTypeKind kind, std::optional<std::string>
 
 CType* newCFunctionType(lua_State* L, std::vector<CType*> argumentTypes, CType* returnType, std::string symbol, bool retainedCTypes)
 {
+    validateCTypes(argumentTypes, false, false, true, true, retainedCTypes);
+    validateCType(returnType, false, true, true, retainedCTypes);
+    api_check(returnType->kind != CTypeKind::Array);
+
+    FFIState* ffiState = getFFIState(L);
+    TCCState* tcc = ffiState->tcc;
+    
+    std::string code = R"(
+typedef void* lua_State;
+typedef float targ0;
+typedef float targ1;
+typedef float tret;
+typedef tret(*func_t)(targ0,targ1);
+
+int raise(int sig);
+int printf(const char* format, ...);
+int lua_tointegerx(lua_State* L, int idx, int *isnum);
+void lua_pushinteger(lua_State* L, int n);
+double lua_tonumberx(lua_State* L, int idx, int *isnum);
+void lua_pushnumber(lua_State* L, double n);
+
+int bindingFunction(lua_State* L, func_t func) {
+    int isnum;
+    targ0 arg0 = lua_tonumberx(L, 1, &isnum);
+    if (!isnum) return -1;
+    targ1 arg1 = lua_tonumberx(L, 2, &isnum);
+    if (!isnum) return -1;
+
+    tret result = func(arg0, arg1);
+    lua_pushnumber(L, result);
+    return 1;
+}
+)";
+
+    printf("source %s\n", code.c_str());
+
+    // std::stringstream code; 
+    // code << "typedef void* lua_State;\n";
+    // code << "extern int printf(const char* format, ...);\n";
+    // code << "extern double lua_tonumberx(lua_State* L, int idx, int *isnum);\n";
+    // code << "extern void lua_pushnumber(lua_State* L, double n);\n";
+    // for (size_t i = 0; i < argumentTypes.size(); ++i)
+    // {
+    //     CType* argType = argumentTypes[i];
+    //     printf("argType: %s\n", toStringCType(argType).c_str());
+    //     code << "typedef " << toStringCType(argType) << " targ" << i << ";\n";
+    // }
+    
+    // code << "typedef " << toStringCType(returnType) << " tret;\n";
+    // code << "typedef tret(*func)(";
+    // for (size_t i = 0; i < argumentTypes.size(); ++i)
+    // {
+    //     code << "targ" << i;
+    //     if (i < argumentTypes.size() - 1)
+    //         code << ",";
+    // }
+    // code << ");\n";
+
+    // code << "int bindingFunction(lua_State* L, func func) {\n";
+    // // code << "    __asm__(\"int3\");\n";
+    // for (size_t i = 0; i < argumentTypes.size(); ++i)
+    // {
+    //     code << "    targ" << i << " arg" << i << " = (targ" << i << ")lua_tonumberx(L, " << (i + 1) << ", 0);\n";
+    // }
+    // if (returnType->kind == CTypeKind::Base && returnType->base->kind == CBaseTypeKind::Void)
+    //     code << "    func(";
+    // else
+    //     code << "    tret result = func(";
+    
+    // for (size_t i = 0; i < argumentTypes.size(); ++i)
+    // {
+    //     code << "arg" << i;
+    //     if (i < argumentTypes.size() - 1)
+    //         code << ", ";
+    // }
+    // code << ");\n";
+    // if (returnType->kind == CTypeKind::Base && returnType->base->kind == CBaseTypeKind::Void)
+    // {
+    //     code << "    return 0;\n";
+    // }
+    // else
+    // {
+    //     code << "    lua_pushnumber(L, (double)result);\n";
+    //     code << "    return 1;\n";
+    // }
+    // code << "}\n";
+
+    if (tcc_compile_string(tcc, code.c_str()) < 0)
+        luaL_error(L, "Failed to compile binding function");
+
+    if (tcc_add_symbol(tcc, "lua_tointegerx", (void*)lua_tointegerx) < 0 || tcc_add_symbol(tcc, "lua_pushinteger", (void*)lua_pushinteger) < 0 ||
+        tcc_add_symbol(tcc, "lua_tonumberx", (void*)lua_tonumberx) < 0 || tcc_add_symbol(tcc, "lua_pushnumber", (void*)lua_pushnumber) < 0 ||
+        tcc_add_symbol(tcc, "luaL_checknumber", (void*)luaL_checknumber) < 0 || tcc_add_symbol(tcc, "luaL_error", (void*)luaL_errorL) < 0 ||
+        tcc_add_symbol(tcc, "printf", (void*)printf) < 0 || tcc_add_symbol(tcc, "raise", (void*)raise) < 0)
+    {
+        luaL_error(L, "Failed to add symbols for binding function");
+    }
+
+    size_t compiledSize = tcc_relocate(tcc, nullptr);
+    if (compiledSize < 0)
+        luaL_error(L, "Failed to relocate binding function");
+
+    void* bindingMemory = malloc(compiledSize);
+    if (tcc_relocate(tcc, bindingMemory) < 0)
+    {
+        free(bindingMemory);
+        luaL_error(L, "Failed to relocate binding function");
+    }
+
+    CBindingFunction bindingFunction = (CBindingFunction)tcc_get_symbol(tcc, "bindingFunction");
+    if (!bindingFunction)
+    {
+        free(bindingMemory);
+        luaL_error(L, "Failed to get binding function symbol");
+    }
+
     CType* ctype = newCType(L, CTypeKind::Function);
     ctype->func = new CFunctionType{
         .argumentTypes = std::move(argumentTypes),
@@ -144,6 +317,8 @@ CType* newCFunctionType(lua_State* L, std::vector<CType*> argumentTypes, CType* 
 
 CType* newCPointerType(lua_State* L, CType* innerType, bool retainedCType)
 {
+    validateCType(innerType, true, true, true, retainedCType);
+
     CType* ctype = newCType(L, CTypeKind::Pointer);
     ctype->ptr = new CPointerType{
         .innerType = innerType,
@@ -156,10 +331,12 @@ CType* newCPointerType(lua_State* L, CType* innerType, bool retainedCType)
 
 CType* newCRecordType(lua_State* L, std::vector<CType*> fieldTypes, std::vector<std::string> fieldNames, bool retainedCTypes)
 {
+    validateCTypes(fieldTypes, false, false, false, true, retainedCTypes);
+    for (const auto& fieldName : fieldNames)
+        api_check(!fieldName.empty());
     api_check(fieldTypes.size() == fieldNames.size());
 
     size_t nfields = fieldTypes.size();
-
     std::unordered_map<std::string_view, size_t> fieldNameToIndex(nfields);
     std::vector<size_t> fieldOffsets(nfields);
 
@@ -170,26 +347,20 @@ CType* newCRecordType(lua_State* L, std::vector<CType*> fieldTypes, std::vector<
         CType* fieldType = fieldTypes[i];
         api_check(fieldType != nullptr);
 
-        // Calculate the alignment of the field type
+        // Calculate the alignment of the field type and update the record's alignment if necessary
         size_t fieldAlignment = getCTypeAlignment(fieldType);
         if (fieldAlignment > alignment)
-        {
             alignment = fieldAlignment;
-        }
 
         // Align the offset to the field's alignment
         if (offset % fieldAlignment != 0)
-        {
             offset += fieldAlignment - (offset % fieldAlignment);
-        }
 
-        // Store the offset for this field
+        // Store the offset for this field and update the offset
         fieldOffsets[i] = offset;
-
-        // Update the offset for the next field
         offset += fieldType->size;
 
-        // Store the name to idx mapping
+        // Map the field name to its index
         fieldNameToIndex[fieldNames[i]] = i;
     }
 
