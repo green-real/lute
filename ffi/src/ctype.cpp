@@ -281,7 +281,7 @@ int bindingFunction(lua_State* L, func_t func) {
     if (tcc_add_symbol(tcc, "lua_tointegerx", (void*)lua_tointegerx) < 0 || tcc_add_symbol(tcc, "lua_pushinteger", (void*)lua_pushinteger) < 0 ||
         tcc_add_symbol(tcc, "lua_tonumberx", (void*)lua_tonumberx) < 0 || tcc_add_symbol(tcc, "lua_pushnumber", (void*)lua_pushnumber) < 0 ||
         tcc_add_symbol(tcc, "luaL_checknumber", (void*)luaL_checknumber) < 0 || tcc_add_symbol(tcc, "luaL_error", (void*)luaL_errorL) < 0 ||
-        tcc_add_symbol(tcc, "printf", (void*)printf) < 0 || tcc_add_symbol(tcc, "raise", (void*)raise) < 0)
+        tcc_add_symbol(tcc, "printf", (void*)printf) < 0)
     {
         luaL_error(L, "Failed to add symbols for binding function");
     }
@@ -482,7 +482,10 @@ std::string toStringCType(CType* ctype)
         {
         case CTypeKind::Array:
             writeType(t->array->elementType, depth);
-            ss << '[' << t->array->elementCount << ']';
+            if (t->array->elementCount == 0)
+                ss << "[]";
+            else
+                ss << '[' << t->array->elementCount << ']';
             break;
         case CTypeKind::Base:
             ss << t->base->name;
@@ -499,7 +502,7 @@ std::string toStringCType(CType* ctype)
             ss << ')';
             break;
         case CTypeKind::Pointer:
-            writeType(t->ptr->innerType, depth);
+            writeType(t->ptr->innerType, 0);
             if (first_pointer)
             {
                 ss << ' ';
@@ -515,8 +518,7 @@ std::string toStringCType(CType* ctype)
                 ss << std::string(depth + 2, ' ');
                 writeType(t->record->fieldTypes[i], depth + 2);
                 ss << ' ' << t->record->fieldNames[i];
-                if (i < t->record->fieldTypes.size() - 1)
-                    ss << ',';
+                ss << ';';
                 ss << '\n';
             }
             ss << std::string(depth, ' ');
@@ -699,14 +701,20 @@ static int handleCTypeNamecall(lua_State* L)
     if (method == nullptr)
         luaL_error(L, "attempt to namecall %s with invalid method", getCTypeKindName(ctype->kind).c_str());
 
-    if (strcmp(method, "kind") == 0)
+    if (strcmp(method, "ptr") == 0)
+    {
+        retainCType(L, 1);
+        newCPointerType(L, ctype, true);
+        return 1;
+    }
+    else if (strcmp(method, "kind") == 0)
     {
         lua_pushstring(L, getCTypeKindName(ctype->kind).c_str());
         return 1;
     }
-    else if (strcmp(method, "size") == 0)
+    else if (strcmp(method, "tostring") == 0)
     {
-        lua_pushinteger(L, ctype->size);
+        lua_pushstring(L, toStringCType(ctype).c_str());
         return 1;
     }
 
