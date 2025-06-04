@@ -1,14 +1,15 @@
 #include "lute/ffi/ctype.h"
-
-#include "./utils.h"
-
-#include "tcc/libtcc.h"
-
+#include "lute/ffi/state.h"
+#include "lute/runtime.h"
 #include "lute/userdatas.h"
+
+#include "utils.h"
 
 #include "Luau/Common.h"
 #include "lua.h"
 #include "lualib.h"
+
+#include "tcc/libtcc.h"
 
 #include <algorithm>
 #include <cstring>
@@ -308,6 +309,7 @@ int bindingFunction(lua_State* L, func_t func) {
         .argumentTypes = std::move(argumentTypes),
         .returnType = returnType,
         .symbol = std::move(symbol),
+        .bindingFunction = bindingFunction,
         .retainedCTypes = retainedCTypes,
     };
     ctype->size = sizeof(void*);

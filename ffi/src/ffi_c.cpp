@@ -3,6 +3,7 @@
 
 #include "lute/ffi/ctype.h"
 
+#include "tcc/libtcc.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -11,6 +12,64 @@
 
 namespace ffi
 {
+
+static CBaseTypeKind getCBaseTypeKind(size_t size, bool sign)
+{
+    switch (size)
+    {
+    case 1:
+        return sign ? CBaseTypeKind::Int8 : CBaseTypeKind::UInt8;
+    case 2:
+        return sign ? CBaseTypeKind::Int16 : CBaseTypeKind::UInt16;
+    case 4:
+        return sign ? CBaseTypeKind::Int32 : CBaseTypeKind::UInt32;
+    case 8:
+        return sign ? CBaseTypeKind::Int64 : CBaseTypeKind::UInt64;
+    default:
+        abort(); // Unsupported size for C base type
+    }
+}
+
+static void registerCBaseTypes(lua_State* L)
+{
+
+#define ADD_TYPE(kind, name) \
+    newCBaseType(L, kind, name); \
+    lua_setfield(L, -2, name);
+
+#define ADD_CTYPE(type, field, name) \
+    newCBaseType(L, getCBaseTypeKind(sizeof(type), std::is_signed_v<type>), name); \
+    lua_setfield(L, -2, name);
+
+    ADD_TYPE(CBaseTypeKind::Void, "void");
+
+    ADD_TYPE(CBaseTypeKind::Int8, "int8_t");
+    ADD_TYPE(CBaseTypeKind::UInt8, "uint8_t");
+    ADD_TYPE(CBaseTypeKind::Int16, "int16_t");
+    ADD_TYPE(CBaseTypeKind::UInt16, "uint16_t");
+    ADD_TYPE(CBaseTypeKind::Int32, "int32_t");
+    ADD_TYPE(CBaseTypeKind::UInt32, "uint32_t");
+    ADD_TYPE(CBaseTypeKind::Int64, "int64_t");
+    ADD_TYPE(CBaseTypeKind::UInt64, "uint64_t");
+
+    ADD_TYPE(CBaseTypeKind::Float, "float");
+    ADD_TYPE(CBaseTypeKind::Double, "double");
+
+    ADD_CTYPE(char, "char", "char");
+    ADD_CTYPE(signed char, "schar", "signed char");
+    ADD_CTYPE(unsigned char, "uchar", "unsigned char");
+    ADD_CTYPE(short, "short", "short");
+    ADD_CTYPE(unsigned short, "ushort", "unsigned short");
+    ADD_CTYPE(int, "int", "int");
+    ADD_CTYPE(unsigned int, "uint", "unsigned int");
+    ADD_CTYPE(long, "long", "long");
+    ADD_CTYPE(unsigned long, "ulong", "unsigned long");
+    ADD_CTYPE(long long, "longlong", "long long");
+    ADD_CTYPE(unsigned long long, "ulonglong", "unsigned long long");
+
+#undef ADD_TYPE
+#undef ADD_CTYPE
+}
 
 static int lua_carray(lua_State* L)
 {
@@ -113,68 +172,69 @@ static int lua_cstruct(lua_State* L)
     return 1;
 }
 
-static CBaseTypeKind getCBaseTypeKind(size_t size, bool sign)
+static int lua_csizeof(lua_State* L)
 {
-    switch (size)
+    if (CType* ctype = toCType(L, 1))
     {
-    case 1:
-        return sign ? CBaseTypeKind::Int8 : CBaseTypeKind::UInt8;
-    case 2:
-        return sign ? CBaseTypeKind::Int16 : CBaseTypeKind::UInt16;
-    case 4:
-        return sign ? CBaseTypeKind::Int32 : CBaseTypeKind::UInt32;
-    case 8:
-        return sign ? CBaseTypeKind::Int64 : CBaseTypeKind::UInt64;
-    default:
-        abort(); // Unsupported size for C base type
+        lua_pushinteger(L, ctype->size);
+        return 1;
     }
+    
+    luaL_typeerror(L, 1, "CType");
 }
 
-static void registerCBaseTypes(lua_State* L)
+static int lua_coffsetof(lua_State* L)
+{
+    CType* ctype = checkCRecordType(L, 1);
+    const char* fieldName = luaL_checkstring(L, 2);
+    auto it = ctype->record->fieldNameToIndex.find(fieldName);
+    if (it != ctype->record->fieldNameToIndex.end())
+    {
+        lua_pushinteger(L, ctype->record->fieldOffsets[it->second]);
+        return 1;
+    }
+    else
+        luaL_argerror(L, 2, "field name not found in struct");
+
+
+    luaL_typeerror(L, 1, "CRecordType");
+}
+
+extern "C" float add(float a, float b)
+{
+    return a + b;
+}
+static int lua_ctest(lua_State* L)
 {
 
-#define ADD_TYPE(kind, name) \
-    newCBaseType(L, kind, name); \
-    lua_setfield(L, -2, name);
+    lua_pushcclosure(L, [](lua_State* L) -> int {
+        CType* ctype = toCType(L, lua_upvalueindex(1));
+        CBindingFunction bindingFunction = ctype->func->bindingFunction;
 
-#define ADD_CTYPE(type, field, name) \
-    newCBaseType(L, getCBaseTypeKind(sizeof(type), std::is_signed_v<type>), name); \
-    lua_setfield(L, -2, name);
+        int result = bindingFunction(L, (void*)add);
+        if (LUAU_UNLIKELY(result == -1))
+        {
+            luaL_error(L, "invalid arguments");
+        }
 
-    ADD_TYPE(CBaseTypeKind::Void, "void");
+        luaL_error(L, "test error");
 
-    ADD_TYPE(CBaseTypeKind::Int8, "int8_t");
-    ADD_TYPE(CBaseTypeKind::UInt8, "uint8_t");
-    ADD_TYPE(CBaseTypeKind::Int16, "int16_t");
-    ADD_TYPE(CBaseTypeKind::UInt16, "uint16_t");
-    ADD_TYPE(CBaseTypeKind::Int32, "int32_t");
-    ADD_TYPE(CBaseTypeKind::UInt32, "uint32_t");
-    ADD_TYPE(CBaseTypeKind::Int64, "int64_t");
-    ADD_TYPE(CBaseTypeKind::UInt64, "uint64_t");
+        return result;
+    }, "testfunc", 1);
 
-    ADD_TYPE(CBaseTypeKind::Float, "float");
-    ADD_TYPE(CBaseTypeKind::Double, "double");
-
-    ADD_CTYPE(char, "char", "char");
-    ADD_CTYPE(signed char, "schar", "signed char");
-    ADD_CTYPE(unsigned char, "uchar", "unsigned char");
-    ADD_CTYPE(short, "short", "short");
-    ADD_CTYPE(unsigned short, "ushort", "unsigned short");
-    ADD_CTYPE(int, "int", "int");
-    ADD_CTYPE(unsigned int, "uint", "unsigned int");
-    ADD_CTYPE(long, "long", "long");
-    ADD_CTYPE(unsigned long, "ulong", "unsigned long");
-    ADD_CTYPE(long long, "longlong", "long long");
-    ADD_CTYPE(unsigned long long, "ulonglong", "unsigned long long");
-
-#undef ADD_TYPE
-#undef ADD_CTYPE
+    
+    return 1;
 }
 
 static const luaL_Reg clib[] = {
     {"array", lua_carray},
     {"func", lua_cfunc},
     {"struct", lua_cstruct},
+    
+    {"sizeof", lua_csizeof},
+    {"offsetof", lua_coffsetof},
+
+    {"test", lua_ctest},
 
     {nullptr, nullptr}
 };

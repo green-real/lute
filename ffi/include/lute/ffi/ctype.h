@@ -13,6 +13,8 @@
 namespace ffi
 {
 
+using CBindingFunction = int (*)(lua_State* L, void* func);
+
 static const char kCTypeName[] = "CType";
 static const char kCArrayTypeName[] = "CArrayType";
 static const char kCBaseTypeName[] = "CBaseType";
@@ -81,6 +83,7 @@ struct CFunctionType
     std::vector<CType*> argumentTypes;
     CType* returnType;
     std::string symbol;
+    CBindingFunction bindingFunction; // generated when this CFunctionType is used for the first time in
     bool retainedCTypes; // whether the argument and return types are retained and need to be released when the CFunctionType is destroyed
 };
 

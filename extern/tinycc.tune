@@ -1,0 +1,5 @@
+[dependency]
+name = "tinycc"
+remote = "https://github.com/Alex2804/libtcc-cmake.git"
+branch = "master"
+revision = "09a037a7d1f8de9fc1aba3baeb37a017132ba1f3"

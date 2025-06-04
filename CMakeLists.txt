@@ -42,6 +42,11 @@ set(LIBUV_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/libuv/include)
 set(FFI_STATIC_BUILD ON)
 include(extern/libffi.cmake)
 
+# tinycc setup
+set(LIBTCC1_NAME "libtcc.a")
+add_subdirectory(extern/tinycc)
+target_compile_definitions(libtcc PRIVATE CONFIG_TCCDIR="${CMAKE_BINARY_DIR}/extern/tinycc")
+
 # boringssl setup
 add_subdirectory(extern/boringssl)
 set(BORINGSSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/boringssl/include)
@@ -125,9 +130,9 @@ target_include_directories(Lute.Process PUBLIC process/include ${LIBUV_INCLUDE_D
 target_include_directories(Lute.System PUBLIC system/include ${LIBUV_INCLUDE_DIR})
 target_include_directories(Lute.Time PUBLIC time/include ${LIBUV_INCLUDE_DIR})
 
-target_link_libraries(Lute.Runtime PUBLIC Luau.Require PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.VM Lute.Std uv_a)
+target_link_libraries(Lute.Runtime PUBLIC Luau.Require Lute.FFI PRIVATE Luau.CLI.lib Luau.Compiler Luau.Config Luau.CodeGen Luau.VM Lute.Std uv_a)
 target_link_libraries(Lute.Crypto PRIVATE Lute.Runtime Luau.VM uv_a ssl crypto)
-target_link_libraries(Lute.FFI PRIVATE Lute.Runtime Luau.VM uv_a libffi)
+target_link_libraries(Lute.FFI PRIVATE Lute.Runtime Luau.VM uv_a libffi libtcc)
 target_link_libraries(Lute.Fs PRIVATE Lute.Runtime Luau.VM uv_a)
 target_link_libraries(Lute.Luau PRIVATE Lute.Runtime Luau.VM uv_a Luau.Analysis Luau.Ast Luau.Compiler)
 target_link_libraries(Lute.Net PRIVATE Lute.Runtime Luau.VM uv_a libcurl uWS)

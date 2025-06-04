@@ -1,4 +1,5 @@
 #include "lute/runtime.h"
+#include "lute/ffi/state.h"
 
 #include "lua.h"
 

@@ -3,6 +3,7 @@
 #include "Luau/Variant.h"
 #include "lua.h"
 #include "lute/ref.h"
+#include "lute/ffi/state.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -74,6 +75,7 @@ struct Runtime
 
     // Shorthand for global state
     lua_State* GL = nullptr;
+    ffi::FFIState ffiState;
 
     std::mutex dataCopyMutex;
     std::unique_ptr<lua_State, void (*)(lua_State*)> dataCopy;
