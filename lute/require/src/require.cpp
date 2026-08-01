@@ -14,6 +14,9 @@
 
 #include <string>
 
+#include <cstdio>
+#include <cstdlib>
+
 static luarequire_WriteResult write(std::optional<std::string> contents, char* buffer, size_t bufferSize, size_t* sizeOut)
 {
     if (!contents)
@@ -185,7 +188,38 @@ static int load(lua_State* L, void* ctx, const char* path, const char* chunkname
         {
             Luau::CodeGen::CompilationOptions nativeOptions;
             nativeOptions.flags = Luau::CodeGen::CodeGen_OnlyNativeModules;
-            Luau::CodeGen::compile(ML, -1, nativeOptions);
+
+            // Report the native compilation result per module under LUTE_CODEGEN_LOG, so a caller can tell which
+            // protos went native from those that fell back to bytecode. Off by default so a normal run stays quiet.
+            if (getenv("LUTE_CODEGEN_LOG"))
+            {
+                Luau::CodeGen::CompilationStats stats;
+                Luau::CodeGen::CompilationResult cgResult = Luau::CodeGen::compile(ML, -1, nativeOptions, &stats);
+                fprintf(
+                    stderr,
+                    "[codegen] %s :: %s | funcs total=%u compiled=%u bound=%u | nativeCode=%zuB nativeData=%zuB bytecode=%zuB\n",
+                    path,
+                    Luau::CodeGen::toString(cgResult.result).c_str(),
+                    stats.functionsTotal,
+                    stats.functionsCompiled,
+                    stats.functionsBound,
+                    stats.nativeCodeSizeBytes,
+                    stats.nativeDataSizeBytes,
+                    stats.bytecodeSizeBytes
+                );
+                for (const Luau::CodeGen::ProtoCompilationFailure& f : cgResult.protoFailures)
+                    fprintf(
+                        stderr,
+                        "[codegen]   FALLBACK proto '%s' (line %d): %s\n",
+                        f.debugname.empty() ? "?" : f.debugname.c_str(),
+                        f.line,
+                        Luau::CodeGen::toString(f.result).c_str()
+                    );
+            }
+            else
+            {
+                Luau::CodeGen::compile(ML, -1, nativeOptions);
+            }
         }
         if (reqCtx->onChunkLoad)
             reqCtx->onChunkLoad(ML, chunkname);
