@@ -92,4 +92,21 @@ function luau.typeofModule(modulepath: string): TypePack?
 	error("not implemented")
 end
 
+--- wasm-luau fork: write the counters gathered under LUTE_CODEGEN_COUNTERS to a callgrind file, naming the emitted
+--- functions that deopted. A no-op when counters were never enabled.
+function luau.dumpCounters(path: string?)
+	error("not implemented")
+end
+
+--- wasm-luau fork: the live heap in bytes. Luau's `collectgarbage` is not among the sandboxed globals, so this is the
+--- only way a script can see what it retains, which is what the collector's mark phase walks on every step.
+function luau.gcBytes(): number
+	error("not implemented")
+end
+
+--- wasm-luau fork: force a full collection, so a measurement separates what was retained from what was merely churned.
+function luau.gcCollect()
+	error("not implemented")
+end
+
 return luau

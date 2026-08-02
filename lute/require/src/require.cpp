@@ -6,6 +6,8 @@
 #include "lute/options.h"
 
 #include "Luau/CodeGen.h"
+// wasm-luau fork: native codegen counters, reused from the Luau CLI (CLI/include is a public include of Luau.CLI.lib).
+#include "Luau/Counters.h"
 #include "Luau/Compiler.h"
 #include "Luau/Require.h"
 
@@ -227,6 +229,17 @@ static int load(lua_State* L, void* ctx, const char* path, const char* chunkname
 
             armCodegenPerfLog();
 
+            // wasm-luau fork: with LUTE_CODEGEN_COUNTERS set, emit per-block Regular/Fallback/VmExit counters so a run
+            // can report which emitted functions deopt to the interpreter at runtime, and track each compiled module so
+            // a later luau.dumpCounters walks them all.
+            bool wantCounters = getenv("LUTE_CODEGEN_COUNTERS") != nullptr;
+            if (wantCounters)
+            {
+                if (!countersActive())
+                    countersInit(ML);
+                nativeOptions.recordCounters = true;
+            }
+
             // Report the native compilation result per module under LUTE_CODEGEN_LOG, so a caller can tell which
             // protos went native from those that fell back to bytecode. Off by default so a normal run stays quiet.
             if (getenv("LUTE_CODEGEN_LOG"))
@@ -258,6 +271,9 @@ static int load(lua_State* L, void* ctx, const char* path, const char* chunkname
             {
                 Luau::CodeGen::compile(ML, -1, nativeOptions);
             }
+
+            if (wantCounters)
+                countersTrack(ML, -1);
         }
         if (reqCtx->onChunkLoad)
             reqCtx->onChunkLoad(ML, chunkname);

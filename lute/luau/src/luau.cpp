@@ -8,6 +8,9 @@
 
 #include "Luau/Ast.h"
 #include "Luau/BuiltinDefinitions.h"
+#include "Luau/CodeGen.h"
+// wasm-luau fork: native codegen counters, reused from the Luau CLI (CLI/include is a public include of Luau.CLI.lib).
+#include "Luau/Counters.h"
 #include "Luau/Compiler.h"
 #include "Luau/Frontend.h"
 #include "Luau/Location.h"
@@ -21,6 +24,7 @@
 #include "lualib.h"
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <iterator>
 #include <memory>
@@ -101,6 +105,32 @@ int load_luau(lua_State* L)
     if (luau_load(L, chunkname, bytecodeString->c_str(), bytecodeString->length(), envIndex) != 0)
         lua_error(L);
 
+    // wasm-luau fork: with LUTE_LOAD_NATIVE set, natively compile the just-loaded chunk so a differential test can
+    // exercise the emitted Luau under native codegen; luau.load otherwise runs it as bytecode. OnlyNativeModules
+    // compiles a module marked --!native, which is exactly what CodeGen emits. Off by default so ordinary load
+    // callers are unaffected.
+    if (getenv("LUTE_LOAD_NATIVE") && Luau::CodeGen::isSupported())
+    {
+        Luau::CodeGen::CompilationOptions nativeOptions;
+        nativeOptions.flags = Luau::CodeGen::CodeGen_OnlyNativeModules;
+
+        // wasm-luau fork: with LUTE_CODEGEN_COUNTERS set, emit per-block Regular/Fallback/VmExit counters so a run can
+        // report which emitted functions deopt to the interpreter at runtime. Track each compiled chunk so a later
+        // dumpCounters call walks them all.
+        bool wantCounters = getenv("LUTE_CODEGEN_COUNTERS") != nullptr;
+        if (wantCounters)
+        {
+            if (!countersActive())
+                countersInit(L);
+            nativeOptions.recordCounters = true;
+        }
+
+        Luau::CodeGen::compile(L, -1, nativeOptions);
+
+        if (wantCounters)
+            countersTrack(L, -1);
+    }
+
     return 1;
 }
 
@@ -151,6 +181,33 @@ static int initLuauLibrary(lua_State* L)
     return 1;
 }
 
+// wasm-luau fork: write the native codegen counters gathered under LUTE_CODEGEN_COUNTERS to a callgrind file, so a
+// script can report which emitted functions deopted. A no-op when counters were never enabled.
+int dumpCounters_luau(lua_State* L)
+{
+    const char* path = luaL_optstring(L, 1, "callgrind.out");
+    if (countersActive())
+        countersDump(path);
+    return 0;
+}
+
+// wasm-luau fork: the live heap in bytes. Luau's collectgarbage is not among lute's sandboxed globals, so a script has
+// no way to see what it retains, and retention is exactly what the collector's mark phase costs on every step.
+int gcBytes_luau(lua_State* L)
+{
+    double kb = double(lua_gc(L, LUA_GCCOUNT, 0));
+    double bytes = double(lua_gc(L, LUA_GCCOUNTB, 0));
+    lua_pushnumber(L, kb * 1024.0 + bytes);
+    return 1;
+}
+
+// wasm-luau fork: force a full collection, so a measurement separates what a stage retains from what it merely churned.
+int gcCollect_luau(lua_State* L)
+{
+    lua_gc(L, LUA_GCCOLLECT, 0);
+    return 0;
+}
+
 } // namespace luau
 
 const char* const LuauLib::properties[] = {nullptr};
@@ -160,6 +217,9 @@ const luaL_Reg LuauLib::lib[] = {
     {"load", luau::load_luau},
     {"resolveModule", resolveModule_luau},
     {"typeofModule", luau::typeofModule_luau},
+    {"dumpCounters", luau::dumpCounters_luau},
+    {"gcBytes", luau::gcBytes_luau},
+    {"gcCollect", luau::gcCollect_luau},
     {nullptr, nullptr},
 };
 

@@ -26,6 +26,10 @@ target_sources(Lute.Require PRIVATE
     src/requirevfs.cpp
     src/stdlibvfs.cpp
     src/userlandvfs.cpp
+
+    # wasm-luau fork: the Luau CLI's codegen counters, which upstream builds only into its Repl rather than into
+    # Luau.CLI.lib. This is where lute native-compiles a required module, so they are compiled in here.
+    ${PROJECT_SOURCE_DIR}/extern/luau/CLI/src/Counters.cpp
 )
 
 target_compile_features(Lute.Require PUBLIC cxx_std_17)
