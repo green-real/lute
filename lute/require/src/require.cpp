@@ -17,6 +17,42 @@
 #include <cstdio>
 #include <cstdlib>
 
+#if defined(__linux__)
+#include <unistd.h>
+#endif
+
+// Under LUTE_CODEGEN_PERF, write the perf JIT symbol map the way the Luau CLI's --codegen-perf does, so a `perf`
+// profile of a native run resolves emitted Luau protos by name instead of leaving them as bare addresses. The map
+// path is the one perf looks for, /tmp/perf-<pid>.map, and the log is process-global and set once before any module
+// is natively compiled, which is why this is armed here rather than per module. The file is deliberately not closed;
+// it is flushed per record and released when the process exits, matching the CLI.
+static void armCodegenPerfLog()
+{
+#if defined(__linux__)
+    static bool armed = false;
+    if (armed || !getenv("LUTE_CODEGEN_PERF"))
+        return;
+    armed = true;
+
+    char path[128];
+    snprintf(path, sizeof(path), "/tmp/perf-%d.map", getpid());
+
+    FILE* perfLog = fopen(path, "w");
+    if (!perfLog)
+        return;
+
+    Luau::CodeGen::setPerfLog(
+        perfLog,
+        [](void* context, uintptr_t addr, unsigned size, const char* symbol)
+        {
+            FILE* outputFile = static_cast<FILE*>(context);
+            fprintf(outputFile, "%016lx %08x %s\n", long(addr), size, symbol);
+            fflush(outputFile);
+        }
+    );
+#endif
+}
+
 static luarequire_WriteResult write(std::optional<std::string> contents, char* buffer, size_t bufferSize, size_t* sizeOut)
 {
     if (!contents)
@@ -188,6 +224,8 @@ static int load(lua_State* L, void* ctx, const char* path, const char* chunkname
         {
             Luau::CodeGen::CompilationOptions nativeOptions;
             nativeOptions.flags = Luau::CodeGen::CodeGen_OnlyNativeModules;
+
+            armCodegenPerfLog();
 
             // Report the native compilation result per module under LUTE_CODEGEN_LOG, so a caller can tell which
             // protos went native from those that fell back to bytecode. Off by default so a normal run stays quiet.
