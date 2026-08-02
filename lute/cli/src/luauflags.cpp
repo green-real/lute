@@ -14,6 +14,11 @@ LUAU_FASTINT(CodegenHeuristicsInstructionLimit)
 LUAU_FASTINT(CodegenHeuristicsBlockLimit)
 LUAU_FASTINT(CodegenHeuristicsBlockInstructionLimit)
 
+// The code allocator caps a module's native code separately from the heuristics above, so a single-file emit large
+// enough to pass them can still fail to bind. Read at CodeGen::create.
+LUAU_FASTINT(LuauCodeGenBlockSize)
+LUAU_FASTINT(LuauCodeGenMaxTotalSize)
+
 static void enableAllLuauFlags()
 {
     for (Luau::FValue<bool>* flag = Luau::FValue<bool>::list; flag; flag = flag->next)
@@ -45,6 +50,10 @@ static void raiseCodegenLimits()
     FInt::CodegenHeuristicsInstructionLimit.value = 1 << 28;
     FInt::CodegenHeuristicsBlockLimit.value = 1 << 22;
     FInt::CodegenHeuristicsBlockInstructionLimit.value = 1 << 24;
+
+    // Max total size must stay at or above the block size, or the allocator rejects the first block it is asked for.
+    FInt::LuauCodeGenBlockSize.value = 512 * 1024 * 1024;
+    FInt::LuauCodeGenMaxTotalSize.value = 2000 * 1024 * 1024;
 }
 
 void setLuauFlags()
