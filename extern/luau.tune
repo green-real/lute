@@ -2,4 +2,4 @@
 name = "luau"
 remote = "https://github.com/green-real/luau.git"
 branch = "wluau"
-revision = "f3154266a9e8e63cffe20940a91d82d85a2822f3"
+revision = "9b6a2aea046b6da67bbe52a31511ccccdc40a6e5"
