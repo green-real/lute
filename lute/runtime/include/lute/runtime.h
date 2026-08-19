@@ -185,3 +185,11 @@ struct ResumeTokenData
 ResumeToken getResumeToken(lua_State* L);
 
 lua_State* setupState(Runtime& runtime, std::function<void(lua_State*)> doBeforeSandbox);
+
+// wasm-luau fork: cumulative bytes the VM allocator has handed out since the process started, never decreasing.
+//
+// The live-heap sampler cannot answer this and no rearrangement of it can. Memory allocated and freed inside one stage
+// appears in neither the reading before it nor the reading after, so a stage that allocates a gigabyte and frees it
+// measures the same as one that allocates nothing, while the collector's cost follows exactly that traffic. Retention
+// and churn are two axes and lute could see only one.
+uint64_t luteAllocatedBytes();

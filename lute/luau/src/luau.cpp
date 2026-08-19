@@ -208,6 +208,14 @@ int gcCollect_luau(lua_State* L)
     return 0;
 }
 
+// wasm-luau fork: cumulative bytes the VM allocator has handed out, never decreasing. gcBytes reports what is live and
+// so cannot see memory a stage allocated and freed within itself, which is the traffic the collector's cost follows.
+int gcAllocated_luau(lua_State* L)
+{
+    lua_pushnumber(L, double(luteAllocatedBytes()));
+    return 1;
+}
+
 } // namespace luau
 
 const char* const LuauLib::properties[] = {nullptr};
@@ -220,6 +228,7 @@ const luaL_Reg LuauLib::lib[] = {
     {"dumpCounters", luau::dumpCounters_luau},
     {"gcBytes", luau::gcBytes_luau},
     {"gcCollect", luau::gcCollect_luau},
+    {"gcAllocated", luau::gcAllocated_luau},
     {nullptr, nullptr},
 };
 
