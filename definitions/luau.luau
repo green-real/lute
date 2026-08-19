@@ -109,4 +109,10 @@ function luau.gcCollect()
 	error("not implemented")
 end
 
+--- wasm-luau fork: cumulative bytes the allocator has handed out, never decreasing. `gcBytes` reports what is live and
+--- so cannot see memory a stage allocated and freed within itself, which is the traffic the collector's cost follows.
+function luau.gcAllocated(): number
+	error("not implemented")
+end
+
 return luau

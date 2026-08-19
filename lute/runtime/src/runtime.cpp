@@ -12,6 +12,9 @@
 #include "uv.h"
 
 #include <assert.h>
+#include <atomic>
+#include <cstdint>
+#include <cstdlib>
 #include <string>
 
 static void lua_close_checked(lua_State* L)
@@ -481,12 +484,37 @@ bool Runtime::runSource(const std::string& source, const Luau::CompileOptions& c
     return runBytecode(bytecode, chunkname, argc, argv);
 }
 
+// wasm-luau fork: the cumulative allocation counter behind luteAllocatedBytes, and the allocator that feeds it. It
+// mirrors Luau's own l_alloc exactly and adds one add on the growth path, so the only behavioural difference from the
+// default is the counter itself.
+static std::atomic<uint64_t> gAllocatedBytes{0};
+
+static void* countingAlloc(void* ud, void* ptr, size_t osize, size_t nsize)
+{
+    (void)ud;
+    if (nsize == 0)
+    {
+        free(ptr);
+        return nullptr;
+    }
+    // A fresh allocation arrives with osize 0, so this counts the whole block; a growing realloc counts the delta.
+    // Bytes handed back on a shrink are not subtracted, because the question is how much traffic the collector saw.
+    if (nsize > osize)
+        gAllocatedBytes.fetch_add(nsize - osize, std::memory_order_relaxed);
+    return realloc(ptr, nsize);
+}
+
+uint64_t luteAllocatedBytes()
+{
+    return gAllocatedBytes.load(std::memory_order_relaxed);
+}
+
 lua_State* setupState(Runtime& runtime, std::function<void(lua_State*)> doBeforeSandbox)
 {
     // Separate VM for data copies
-    runtime.dataCopy.reset(luaL_newstate());
+    runtime.dataCopy.reset(lua_newstate(countingAlloc, nullptr));
 
-    runtime.globalState.reset(luaL_newstate());
+    runtime.globalState.reset(lua_newstate(countingAlloc, nullptr));
 
     lua_State* L = runtime.globalState.get();
 
